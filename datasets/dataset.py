@@ -15,11 +15,13 @@ class ImageSet(data.Dataset):
     """
     Reads a folder of images, sup + unsup
     """
-    def __init__(self, root_dir, image_size, _type='train'):
+    def __init__(self, root_dir, txt_path, image_size, _type='train'):
         self.root_dir = root_dir
-        self.classes = sorted(os.listdir(root_dir))
+        self.txt_path = txt_path
+        self.classes = ['pneumonia', 'normal', 'COVID-19']
+
         self.mapping_classes()
-        self.fns = self.load_images()
+        self.fns = self.load_data()
         self.transforms = get_augmentation(image_size, _type=_type)
         if _type == 'train':
             # MixUp and CutMix
@@ -29,6 +31,19 @@ class ImageSet(data.Dataset):
             self.mixupcutmix = tf.RandomChoice(mixup_transforms)
         else:
             self.mixupcutmix = None
+
+    def load_data(self):
+        fns = []
+
+        with open(self.txt_path) as f:
+            data = f.read().splitlines()
+
+        for row in data:
+            patient_id, image_name, label, dataset_id = row.split(' ')
+            label_id = self.classes_idx[label]
+            fns.append((image_name, label_id))
+
+        return fns
 
     def mapping_classes(self):
         self.classes_idx = {}
