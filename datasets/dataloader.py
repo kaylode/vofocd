@@ -14,11 +14,12 @@ def class_imbalance_sampler(labels):
     return sampler
 
 class ImageLoader(data.DataLoader):
-    def __init__(self,  root_dir, image_size, type, batch_size):
+    def __init__(self,  root_dir, txt_path, image_size, type, batch_size):
 
         self.root_dir = root_dir
         self.dataset = ImageSet(
             root_dir=root_dir, 
+            txt_path=txt_path,
             image_size=image_size,
             _type=type
         )

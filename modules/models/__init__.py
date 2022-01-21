@@ -6,7 +6,7 @@ from .covidnet import CovidNet
 def get_model(config, num_classes):
 
     if config.model_name == 'covidnet':
-        net = CovidNet('large', num_classes=num_classes)
+        net = CovidNet('large', n_classes=num_classes)
     else:
         net = BaseTimmModel(
             name=config.model_name, 

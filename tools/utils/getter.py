@@ -111,15 +111,17 @@ def get_dataset_and_dataloader(config):
     
     trainloader = ImageLoader(
         root_dir = config.train_imgs, 
+        txt_path = config.train_txt, 
         image_size=config.image_size, 
         batch_size=config.batch_size,
-        _type='train')
+        type='train')
     
     valloader = ImageLoader(
         root_dir = config.val_imgs, 
+        txt_path = config.val_txt, 
         image_size=config.image_size, 
         batch_size=config.batch_size,
-        _type='val')
+        type='val')
 
     return  trainloader.dataset, valloader.dataset, trainloader, valloader
 

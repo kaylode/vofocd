@@ -1,10 +1,10 @@
 settings:
   #################   DATASET CONFIG   ###################
 
-  train_imgs: ""
-  val_imgs: ""
-  train_txt: ""
-  val_txt: ""
+  train_imgs: "/content/data/COVIDx/images"
+  val_imgs: "/content/data/COVIDx/images"
+  train_txt: "/content/data/COVIDx/train_COVIDx9A.txt"
+  val_txt: "/content/data/COVIDx/test_COVIDx9A.txt"
   
   #################   TRAINING CONFIG   ###################
   

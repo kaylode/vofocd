@@ -33,6 +33,7 @@ class ImageSet(data.Dataset):
             self.mixupcutmix = None
 
     def load_data(self):
+        self.classes_dist = []
         fns = []
 
         with open(self.txt_path) as f:
@@ -40,8 +41,12 @@ class ImageSet(data.Dataset):
 
         for row in data:
             patient_id, image_name, label, dataset_id = row.split(' ')
+
+            if label == 'positive':
+                label = 'COVID-19'
             label_id = self.classes_idx[label]
             fns.append((image_name, label_id))
+            self.classes_dist.append(label_id)
 
         return fns
 
@@ -124,7 +129,7 @@ class ImageSet(data.Dataset):
         return s1 + s2
 
     def load_image(self, image_id):
-        img_path = os.path.join(self.root_dir, image_id+'.jpg')
+        img_path = os.path.join(self.root_dir, image_id)
         img = Image.open(img_path).convert('RGB')
         aug_img = self.transforms(img)
         return aug_img, img

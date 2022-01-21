@@ -49,6 +49,7 @@ class PEXP(nn.Module):
 class CovidNet(nn.Module):
     def __init__(self, model='small', n_classes=3):
         super(CovidNet, self).__init__()
+        self.name = 'covidnet'
         filters = {
             'pexp1_1': [64, 256],
             'pexp1_2': [256, 256],
