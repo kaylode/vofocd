@@ -8,7 +8,7 @@ settings:
   
   #################   TRAINING CONFIG   ###################
   
-  model_name: 'tf_efficientnet_b5_ns' #[vit_base_patch16_384]
+  model_name: 'covidnet' #[vit_base_patch16_384]
   loss_fn: 'focal' #[ce | focal]
 
   # pretrained_backbone: ''                  # Pretrained backbone
