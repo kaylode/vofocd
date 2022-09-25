@@ -1,6 +1,7 @@
 import matplotlib as mpl
-
+import matplotlib.pyplot as plt
 mpl.use("Agg")
+
 from theseus.opt import Opts
 from theseus.classification.pipeline import Pipeline
 
