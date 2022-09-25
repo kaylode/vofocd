@@ -8,7 +8,6 @@
 #       For reference:
 #           https://docs.docker.com/develop/develop-images/build_enhancements/
 ARG BASE_IMAGE=ubuntu:18.04
-ARG PYTHON_VERSION=3.8
 
 # Instal basic utilities
 FROM ${BASE_IMAGE} as dev-base
@@ -31,8 +30,8 @@ ENV PATH /opt/conda/bin:$PATH
 
 FROM dev-base as conda-installs
 ARG PYTHON_VERSION=3.8
-ARG CUDA_VERSION=10.2
-ARG PYTORCH_VERSION=1.12.0
+ARG CUDA_VERSION=11.3
+ARG PYTORCH_VERSION=1.12.1
 ARG CUDA_CHANNEL=nvidia
 ARG INSTALL_CHANNEL=pytorch
 ENV CONDA_OVERRIDE_CUDA=${CUDA_VERSION}
@@ -44,27 +43,10 @@ RUN curl -fsSL -v -o ~/miniconda.sh -O  https://repo.anaconda.com/miniconda/Mini
     python=${PYTHON_VERSION} \
     pytorch=${PYTORCH_VERSION} torchvision "cudatoolkit=${CUDA_VERSION}" && \
     /opt/conda/bin/conda clean -ya
-RUN /opt/conda/bin/python -m pip install --user mmcv-full==1.3.17 -f https://download.openmmlab.com/mmcv/dist/cu102/torch1.10.0/index.html && \
-    /opt/conda/bin/python -m pip install --user imgaug==0.4.0 mmdet==2.18.1 gdown einops tldextract flask seaborn
-
-# Install mmocr
-COPY detection/mmocr/ /workspace/mmocr/
-WORKDIR /workspace/mmocr
-RUN /opt/conda/bin/python -m pip install --user .
-
-# Install yolov5
-COPY detection/yolov5/ /workspace/yolov5/
-WORKDIR /workspace/mmocr
-RUN /opt/conda/bin/python -m pip install --user .
-
-# Install transformerocr
-COPY recognition/transformer/ /workspace/vietocr/
-WORKDIR /workspace/vietocr
-RUN /opt/conda/bin/python -m pip install --user .
 
 # Install classification
-COPY classification/ /workspace/classification/
-WORKDIR /workspace/classification/
+COPY ./ /workspace/
+WORKDIR /workspace/
 RUN /opt/conda/bin/python -m pip install -e .
 
 
@@ -83,18 +65,17 @@ RUN --mount=type=cache,id=apt-final,target=/var/cache/apt \
     tmux \
     libpng-dev && \
     rm -rf /var/lib/apt/lists/*
+
 COPY --from=conda-installs /opt/conda /opt/conda
 # copy packages installed by pip
-COPY --from=conda-installs /root/.local /root/.local
+# COPY --from=conda-installs /root/.local /root/.local
 COPY --from=conda-installs /workspace /workspace
+
 ENV PATH /opt/conda/bin:$PATH
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
 ENV PYTORCH_VERSION ${PYTORCH_VERSION}
-
-RUN /opt/conda/bin/python -m pip install --user pandas nltk 
-RUN python -c "import nltk; nltk.download('punkt')"
 
 WORKDIR /workspace
 
