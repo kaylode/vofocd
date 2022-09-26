@@ -11,3 +11,4 @@ grad-cam
 tabulate
 loguru
 seaborn
+wandb
