@@ -11,9 +11,10 @@ from theseus.utilities.loggers.observer import LoggerObserver
 
 model_last_layers = {
     'convnext': ['stages', -1],
-    'tf_efficientnet': ['act2'],
-    'tf_efficientnetv2': ['act2'],
-    'xception': ['act4']
+    'tf_efficientnetv2': ['bn2', 'act'],
+    'inception_v3': ['Mixed_7c', 'branch_pool', 'bn'],
+    'xception': ['act4'],
+    'resnet50': ['layer4', -1]
 }
 
 def get_layer_recursively(model, layer_names):
@@ -55,7 +56,7 @@ class CAMWrapper(BaseCAM):
                 LoggerObserver.text(
                     f"""Model {model_name} has not been registered for using CAM. 
                     Please register in the `model_last_layers` dict above""", 
-                    LoggerObserver.ERROR
+                    level=LoggerObserver.ERROR
                 )
 
             target_layers = get_layer_recursively(model, model_last_layers[model_name])
