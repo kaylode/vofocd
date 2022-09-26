@@ -8,11 +8,12 @@ train:
       - name: TVRandomResizedCrop
         args:
           size: [224, 224]
-      - name: TVRandAugment
+      - name: TVRandomAffine
         args:
-          num_ops: 2
-          magnitude: 9
-          num_magnitude_bins: 31
+          degrees: 10
+          translate: [0.1, 0.2]
+          scale: [0.8, 1.0]
+          shear: 5
       - name: TVToTensor
       - name: TVNormalize
         args:

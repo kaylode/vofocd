@@ -1,5 +1,6 @@
+
 global:
-  exp_name: null
+  exp_name: convnext_small
   exist_ok: false
   debug: true
   cfg_transform: configs/classification/transform.yaml
@@ -10,7 +11,7 @@ global:
 trainer:
   name: SupervisedTrainer
   args:
-    num_iterations: 10000
+    num_iterations: 30000
     clip_grad: 10.0
     evaluate_interval: 1
     print_interval: 20
@@ -24,8 +25,10 @@ callbacks:
       best_key: bl_acc
   - name: VisualizerCallbacks
     args: null
-  - name: TensorboardCallbacks
-    args: null
+  - name: WandbCallbacks
+    args: 
+      username: vocal-fold-isbi
+      project_name: vocal-fold-isbi
 model:
   name: BaseTimmModel
   args:
@@ -67,13 +70,13 @@ data:
       name: CSVDataset
       args:
         image_dir: data/Train
-        csv_path: data/output_train.csv
+        csv_path: data/output_1_train.csv
         txt_classnames: configs/classification/classes.txt
     val:
       name: CSVDataset
       args:
         image_dir: data/Train
-        csv_path: data/output_val.csv
+        csv_path: data/output_1_val.csv
         txt_classnames: configs/classification/classes.txt
   dataloader:
     train:
@@ -82,12 +85,6 @@ data:
         batch_size: 8
         drop_last: true
         shuffle: false
-        collate_fn:
-          name: MixupCutmixCollator
-          args:
-            mixup_alpha: 0.4
-            cutmix_alpha: 1.0
-            weight: [0.2, 0.2]
         sampler:
           name: BalanceSampler
           args:
