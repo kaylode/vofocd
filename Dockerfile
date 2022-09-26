@@ -68,7 +68,6 @@ RUN --mount=type=cache,id=apt-final,target=/var/cache/apt \
 
 COPY --from=conda-installs /opt/conda /opt/conda
 # copy packages installed by pip
-# COPY --from=conda-installs /root/.local /root/.local
 COPY --from=conda-installs /workspace /workspace
 
 ENV PATH /opt/conda/bin:$PATH
@@ -78,5 +77,3 @@ ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
 ENV PYTORCH_VERSION ${PYTORCH_VERSION}
 
 WORKDIR /workspace
-
-# # ENTRYPOINT ["/bin/bash", "run.sh"]
