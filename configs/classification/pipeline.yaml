@@ -1,4 +1,3 @@
-
 global:
   exp_name: convnext_small
   exist_ok: false
@@ -26,7 +25,7 @@ callbacks:
   - name: VisualizerCallbacks
     args: null
   - name: WandbCallbacks
-    args: 
+    args:
       username: vocal-fold-isbi
       project_name: vocal-fold-isbi
 model:
@@ -35,7 +34,7 @@ model:
     model_name: convnext_small
     from_pretrained: true
 loss:
-  name: CELoss
+  name: ClassificationCELoss
 metrics:
   - name: Accuracy
     args: null
@@ -67,13 +66,13 @@ scheduler:
 data:
   dataset:
     train:
-      name: CSVDataset
+      name: ClassificationCSVDataset
       args:
         image_dir: data/Train
         csv_path: data/output_1_train.csv
         txt_classnames: configs/classification/classes.txt
     val:
-      name: CSVDataset
+      name: ClassificationCSVDataset
       args:
         image_dir: data/Train
         csv_path: data/output_1_val.csv
