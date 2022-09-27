@@ -19,6 +19,7 @@ model_last_layers = {
     'xception': ['act4'],
     'resnet50': ['layer4', -1],
     "tf_mobilenetv3": ["blocks", -1],
+    "mobilenetv3": ["act2"],
 }
 
 def get_layer_recursively(model, layer_names):
