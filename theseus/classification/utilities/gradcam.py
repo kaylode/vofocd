@@ -20,6 +20,7 @@ model_last_layers = {
     'resnet50': ['layer4', -1],
     "tf_mobilenetv3": ["blocks", -1],
     "mobilenetv3": ["act2"],
+    "vit_base_patch32_224": ["11","drop_path2"]
 }
 
 def get_layer_recursively(model, layer_names):
