@@ -1,2 +1,1 @@
 git+https://github.com/kaylode/theseus.git@master
-timm==0.6.7

@@ -48,6 +48,7 @@ RUN curl -fsSL -v -o ~/miniconda.sh -O  https://repo.anaconda.com/miniconda/Mini
 COPY ./ /workspace/
 WORKDIR /workspace/
 RUN /opt/conda/bin/python -m pip install -r requirements.txt
+RUN /opt/conda/bin/python -m pip install -U timm
 
 
 FROM ${BASE_IMAGE} as official
