@@ -30,6 +30,7 @@ class MedTEX(nn.Module):
     ):
         super().__init__()
 
+        self.name = model_name
         self.classnames = classnames
         self.num_classes = num_classes
         self.freeze = freeze
