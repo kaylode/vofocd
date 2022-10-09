@@ -26,9 +26,10 @@ callbacks:
   - name: ClassificationVisualizerCallbacks
     args: null
 model:
-  name: MedTEXTeacher
+  name: MedTEXStudent
   args:
     model_name: convnext_small
+    pretrained: True
 loss:
   name: ClassificationCELoss
 metrics:

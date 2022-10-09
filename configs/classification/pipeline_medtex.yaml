@@ -32,7 +32,6 @@ model:
 loss:
   name: MedTEXLoss
   args:
-    temperature: 0.9
     lambd:  0.001
 metrics:
   - name: Accuracy

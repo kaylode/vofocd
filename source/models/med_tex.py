@@ -132,7 +132,7 @@ class MedTEXFramework(nn.Module):
         """
         return self.student
     
-    def __call__(self, batch: Dict, device: torch.device):
+    def forward(self, batch: Dict, device: torch.device):
 
         student_output_dict = self.student(batch, device)
         student_outputs, student_features = student_output_dict['outputs'], student_output_dict['inter_features']
