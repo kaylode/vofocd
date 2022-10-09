@@ -1,13 +1,14 @@
 global:
-  exp_name: convnext_small
+  exp_name: convnext_small_medtex
   exist_ok: false
-  debug: true
+  debug: false
   cfg_transform: configs/classification/transform.yaml
   save_dir: runs
-  device: cuda:0
-  pretrained: null
+  device: cuda:1
+  pretrained_teacher: null
+  pretrained_student: null
   resume: null
-  stage: normal
+  stage: distillation
 trainer:
   name: SupervisedTrainer
   args:
@@ -25,17 +26,13 @@ callbacks:
       best_key: bl_acc
   - name: ClassificationVisualizerCallbacks
     args: null
-  # - name: WandbCallbacks
-  #   args:
-  #     username: vocal-fold-isbi
-  #     project_name: vocal-fold-isbi
 model:
-  name: BaseTimmModel
+  name: MedTEXFramework
   args:
-    model_name: convnext_small
-    from_pretrained: true
 loss:
-  name: ClassificationCELoss
+  name: MedTEXLoss
+  args:
+    lambd:  0.001
 metrics:
   - name: Accuracy
     args: null
@@ -44,14 +41,10 @@ metrics:
   - name: F1ScoreMetric
     args:
       average: weighted
-  - name: ConfusionMatrix
-    args: null
-  - name: ErrorCases
-    args:
 optimizer:
   name: AdamW
   args:
-    lr: 0.001
+    lr: 0.0003
     weight_decay: 0.0005
     betas:
       - 0.937
@@ -60,9 +53,9 @@ scheduler:
   name: SchedulerWrapper
   args:
     scheduler_name: cosine2
-    t_initial: 7
-    t_mul: 0.9
-    eta_mul: 0.9
+    t_initial: 30
+    t_mul: 0.95
+    eta_mul: 0.95
     eta_min: 1.0e-06
 data:
   dataset:
