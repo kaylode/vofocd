@@ -32,7 +32,7 @@ callbacks:
 model:
   name: MedTEXTeacher
   args:
-    model_name: convnext_large
+    model_name: convnext_small
     pretrained: True
 loss:
   name: ClassificationCELoss
@@ -78,7 +78,7 @@ data:
     train:
       name: DataLoaderWithCollator
       args:
-        batch_size: 32
+        batch_size: 64
         drop_last: true
         shuffle: false
         sampler:
@@ -87,6 +87,6 @@ data:
     val:
       name: DataLoaderWithCollator
       args:
-        batch_size: 32
+        batch_size: 64
         drop_last: false
         shuffle: true

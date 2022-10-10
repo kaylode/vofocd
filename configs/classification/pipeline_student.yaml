@@ -28,7 +28,7 @@ callbacks:
 model:
   name: MedTEXStudent
   args:
-    model_name: convnext_small
+    model_name: convnext_nano
     pretrained: True
 loss:
   name: ClassificationCELoss

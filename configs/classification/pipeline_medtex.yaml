@@ -30,9 +30,15 @@ model:
   name: MedTEXFramework
   args:
 loss:
-  name: MedTEXLoss
+  name: MultiLoss
   args:
-    lambd:  0.001
+    weights: [0.1, 1.0]
+    losses:  
+      - name: GaussianLoss
+        args:
+      - name: TemperatureScaledKLDivLoss
+        args:
+          temperature: 2.0
 metrics:
   - name: Accuracy
     args: null
@@ -44,7 +50,7 @@ metrics:
 optimizer:
   name: AdamW
   args:
-    lr: 0.0003
+    lr: 0.001
     weight_decay: 0.0005
     betas:
       - 0.937
@@ -75,7 +81,7 @@ data:
     train:
       name: DataLoaderWithCollator
       args:
-        batch_size: 8
+        batch_size: 12
         drop_last: true
         shuffle: false
         sampler:
@@ -84,6 +90,6 @@ data:
     val:
       name: DataLoaderWithCollator
       args:
-        batch_size: 8
+        batch_size: 12
         drop_last: false
         shuffle: true
