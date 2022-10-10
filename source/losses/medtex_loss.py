@@ -22,18 +22,18 @@ class MedTEXLoss(nn.Module):
         celoss = self.ce_loss(student_outputs, teacher_pred.view(-1).contiguous()) 
 
         # Intermediate layers loss
-        student_features = outputs["student_outputs"]['inter_features']
-        teacher_features = outputs["teacher_outputs"]['inter_features']
+        # student_features = outputs["student_outputs"]['inter_features']
+        # teacher_features = outputs["teacher_outputs"]['inter_features']
 
-        inter_loss = 0
-        for st_ft, tch_ft in zip(student_features, teacher_features):
-            inter_loss += self.kdcriterion(st_ft, tch_ft)
+        # inter_loss = 0
+        # for st_ft, tch_ft in zip(student_features, teacher_features):
+        #     inter_loss += self.kdcriterion(st_ft, tch_ft)
 
-        total_loss = celoss + self.lambd* inter_loss
+        total_loss = celoss #+ self.lambd* inter_loss
 
         loss_dict = {
              "CE": celoss.item(),
-           "Inter": inter_loss.item(),
+        #    "Inter": inter_loss.item(),
             "T": total_loss.item()
         }
         return total_loss, loss_dict
