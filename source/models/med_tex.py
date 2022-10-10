@@ -105,7 +105,7 @@ class MedTEXFramework(nn.Module):
 
         super().__init__()
         self.teacher = MedTEXTeacher(
-            'convnext_large',
+            'convnext_small',
             num_classes=num_classes,
             classnames=classnames,
             freeze=True
@@ -114,14 +114,13 @@ class MedTEXFramework(nn.Module):
         self.teacher.eval()
 
         self.student = MedTEXStudent(
-            'convnext_small',
+            'convnext_nano',
             num_classes=num_classes,
             classnames=classnames,
             freeze=False
         )
 
         self.subnetwork = Subnetwork(self.student.feature_dims, self.teacher.feature_dims)
-            
 
         self.num_classes = num_classes
         self.classnames = classnames
@@ -141,13 +140,14 @@ class MedTEXFramework(nn.Module):
             teacher_output_dict = self.teacher(batch, device)
             teacher_outputs, teacher_features = teacher_output_dict['outputs'], teacher_output_dict['inter_features']
 
-        mapped_student_features = self.subnetwork(student_features)
+        mapped_student_features, student_variances = self.subnetwork(student_features)
 
         return {
             'outputs': student_outputs,
             'student_outputs': {
                 'outputs': student_outputs,
                 'inter_features': mapped_student_features,
+                'variances': student_variances
             },
             'teacher_outputs': {
                 'outputs': teacher_outputs,

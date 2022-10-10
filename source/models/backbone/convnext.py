@@ -161,6 +161,11 @@ model_urls = {
 }
 
 @register_model
+def convnext_nano(**kwargs):
+    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[24, 48, 96, 192], **kwargs)
+    return model
+
+@register_model
 def convnext_tiny(pretrained=False,in_22k=False, **kwargs):
     model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], **kwargs)
     if pretrained:
@@ -171,6 +176,7 @@ def convnext_tiny(pretrained=False,in_22k=False, **kwargs):
         except:
             pass
     return model
+
 
 @register_model
 def convnext_small(pretrained=False,in_22k=False, **kwargs):
@@ -222,6 +228,7 @@ def convnext_xlarge(pretrained=False, in_22k=False, **kwargs):
     return model
 
 model_factory = {
+    'convnext_nano': convnext_nano,
     'convnext_small': convnext_small,
     'convnext_base': convnext_base,
     'convnext_large': convnext_large,
