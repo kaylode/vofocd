@@ -36,7 +36,7 @@ class NestedUNet(nn.Module):
     def __init__(self, in_ch=3, out_ch=1):
         super(NestedUNet, self).__init__()
 
-        n1 = 64
+        n1 = 32
         filters = [n1, n1 * 2, n1 * 4, n1 * 8, n1 * 16]
 
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
