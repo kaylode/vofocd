@@ -47,24 +47,39 @@ class MedTEXStudent(MedTEX):
         num_classes: int = 1000,
         classnames: Optional[List] = None,
         freeze: bool = False,
+        use_explainer: bool = True,
         **kwargs
     ):
         super().__init__(model_name, pretrained, num_classes, classnames, freeze)
-        self.auto_encoder = NestedUNet(
-            in_ch=3, out_ch=1
-        )
+
+        self.use_explainer = use_explainer
+        if self.use_explainer:
+            self.auto_encoder = NestedUNet(
+                in_ch=3, out_ch=1
+            )
 
         # self.auto_encoder = ConvAutoencoder()
 
     def forward(self, batch: Dict, device: torch.device):
         x = move_to(batch['inputs'], device)
-        pixel_map = self.auto_encoder(x)
-        x_hat = pixel_map*x
-        outputs, features = self.model(x_hat, return_features=True)
-        return {
-            'outputs': outputs, 
-            'inter_features': features
-        }
+
+        if self.use_explainer:
+            pixel_map = self.auto_encoder(x)
+            x = pixel_map*x
+
+        outputs, features = self.model(x, return_features=True)
+
+        if self.use_explainer:
+            return {
+                'outputs': outputs, 
+                'inter_features': features,
+                'pixel_map': pixel_map.detach()
+            }
+        else:
+            return {
+                'outputs': outputs, 
+                'inter_features': features
+            }
 
 class MedTEXTeacher(MedTEX):
     """
@@ -101,6 +116,7 @@ class MedTEXFramework(nn.Module):
         self, 
         classnames: str = None,
         num_classes: int = 1000,
+        student_explainer: bool = True,
         **kwargs):
 
         super().__init__()
@@ -117,7 +133,8 @@ class MedTEXFramework(nn.Module):
             'convnext_nano',
             num_classes=num_classes,
             classnames=classnames,
-            freeze=False
+            freeze=False,
+            use_explainer=student_explainer
         )
 
         self.subnetwork = Subnetwork(self.student.feature_dims, self.teacher.feature_dims)
