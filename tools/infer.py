@@ -22,7 +22,7 @@ class TestPipeline(BaseTestPipeline):
             opt: Config
         ):
 
-        super(TestPipeline, self).__init__()
+        super(TestPipeline, self).__init__(opt)
         self.opt = opt
 
     def init_globals(self):

@@ -73,7 +73,7 @@ class MedTEXStudent(MedTEX):
             return {
                 'outputs': outputs, 
                 'inter_features': features,
-                'pixel_map': pixel_map.detach()
+                'pixel_maps': pixel_map.detach()
             }
         else:
             return {
@@ -161,6 +161,7 @@ class MedTEXFramework(nn.Module):
 
         return {
             'outputs': student_outputs,
+            'pixel_maps': student_output_dict['pixel_maps'],
             'student_outputs': {
                 'outputs': student_outputs,
                 'inter_features': mapped_student_features,
@@ -181,7 +182,9 @@ class MedTEXFramework(nn.Module):
         device: `torch.device`
             current device 
         """
-        outputs = self.forward(adict, device)['outputs']
+        output_dict = self.forward(adict, device)
+        outputs = output_dict['outputs']
+        pixel_maps = output_dict['pixel_maps']
 
         if not adict.get('multilabel'):
             outputs, probs = logits2labels(outputs, label_type='multiclass', return_probs=True)
@@ -205,4 +208,5 @@ class MedTEXFramework(nn.Module):
             'labels': classids,
             'confidences': probs, 
             'names': classnames,
+            'pixel_maps': pixel_maps,
         }

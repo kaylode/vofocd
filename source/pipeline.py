@@ -9,7 +9,7 @@ from theseus.classification.datasets import DATASET_REGISTRY, DATALOADER_REGISTR
 from theseus.classification.trainer import TRAINER_REGISTRY
 from theseus.classification.metrics import METRIC_REGISTRY
 from source.models import MODEL_REGISTRY
-from theseus.classification.callbacks import CALLBACKS_REGISTRY
+from source.callbacks import CALLBACKS_REGISTRY
 from theseus.utilities.loading import load_state_dict
 from theseus.utilities.loggers import LoggerObserver
 from theseus.utilities.getter import (get_instance, get_instance_recursively)
