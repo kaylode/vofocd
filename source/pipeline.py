@@ -88,7 +88,7 @@ class TestPipeline(BaseTestPipeline):
         self,
         opt: Config
     ):
-        super(Pipeline, self).__init__(opt)
+        super().__init__(opt)
 
     def init_loading(self):
         self.weights = self.opt['global']['weights']
