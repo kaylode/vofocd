@@ -5,5 +5,5 @@ PYTHONPATH=. python3 ./tools/visualize_gradients.py \
               global.exp_name=$EXP_NAME \
               global.exist_ok=False \
               data.dataset.args.image_dir=data/Train \
-              global.cfg_transform=weights/test_medtex_nano_small/transform.yaml \
-              global.weights=weights/test_medtex_nano_small/checkpoints/best.pth
+              global.cfg_transform=weights/convnext_small_teacher_pt/transform.yaml \
+              global.weights=weights/convnext_small_teacher_pt/checkpoints/best.pth

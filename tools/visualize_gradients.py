@@ -2,6 +2,7 @@ import matplotlib as mpl
 mpl.use("Agg")
 from theseus.opt import Opts
 
+import torch
 import numpy as np
 import os.path as osp
 from tqdm import tqdm
@@ -62,20 +63,22 @@ class GradientTestPipeline(TestPipeline):
         }
         
         self.visualizer = Visualizer()
+        self.model.eval()
         self.model.zero_grad()
 
         ## Calculate GradCAM and Grad Class Activation Mapping and
-        model_name = "convnext_nano"
+        model_name = "convnext_small"
 
         for idx, batch in enumerate(tqdm(self.dataloader)):
             images = batch['inputs']
             img_names = batch['img_names']
-            outputs = self.model.get_prediction(batch, self.device)
+            # with torch.no_grad():
+            #     outputs = self.model.get_prediction(batch, self.device)
 
             try:
                 grad_cam = CAMWrapper.get_method(
                     name='gradcam', 
-                    model=self.model.student.model, 
+                    model=self.model.get_model(), 
                     model_name=model_name, use_cuda=next(self.model.parameters()).is_cuda)
                 
                 grayscale_cams, label_indices, scores = grad_cam(images, return_probs=True)
@@ -85,23 +88,23 @@ class GradientTestPipeline(TestPipeline):
                 LOGGER.text(e, level=LoggerObserver.ERROR)
                 return
 
-            preds = outputs['names']
-            probs = outputs['confidences']
-            pixel_maps = outputs['pixel_maps'].cpu().numpy()
+            # preds = outputs['names']
+            # probs = outputs['confidences']
+            # pixel_maps = outputs['pixel_maps'].cpu().numpy()
 
             for idx in range(len(grayscale_cams)):
                 image = images[idx]
                 label = label_indices[idx]
                 grayscale_cam = grayscale_cams[idx, :]
                 image_name = img_names[idx]
-                pixel_map = pixel_maps[idx].squeeze()
-                pixel_map = (pixel_map*255).astype(np.uint8)
+                # pixel_map = pixel_maps[idx].squeeze()
+                # pixel_map = (pixel_map*255).astype(np.uint8)
 
                 img_show = self.visualizer.denormalize(image)
                 if self.dataloader.dataset.classnames is not None:
                     label = self.dataloader.dataset.classnames[label]
 
-                img_cam =show_cam_on_image(img_show, grayscale_cam, use_rgb=True, image_weight=0.8)
+                img_cam =show_cam_on_image(img_show, grayscale_cam, use_rgb=True, image_weight=0.5)
                 
                 # img_grad = pixel_map
                 # img_grad = (img_show*pixel_map).astype(np.uint8)

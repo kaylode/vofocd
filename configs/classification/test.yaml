@@ -8,8 +8,9 @@ global:
   weights: null
 
 model:
-  name: MedTEXFramework
+  name: MedTEXTeacher
   args:
+    model_name: convnext_small
 
 data:
   dataset:
