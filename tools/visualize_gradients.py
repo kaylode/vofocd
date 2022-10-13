@@ -10,7 +10,7 @@ from source.models import MODEL_REGISTRY
 from torchvision.transforms import functional as TFF
 
 from theseus.utilities.loggers import LoggerObserver
-from theseus.base.pipeline import BaseTestPipeline
+from source.pipeline import TestPipeline
 from theseus.classification.utilities.gradcam import CAMWrapper, show_cam_on_image, model_last_layers
 from theseus.utilities.visualization.visualizer import Visualizer
 
@@ -32,13 +32,13 @@ def visualize_gradients(gradient, save_path):
     plt.tight_layout(pad=0)
 
 
-class TestPipeline(BaseTestPipeline):
+class GradientTestPipeline(TestPipeline):
     def __init__(
             self,
             opt: Config
         ):
 
-        super(TestPipeline, self).__init__(opt)
+        super(GradientTestPipeline, self).__init__(opt)
         self.opt = opt
 
     def init_globals(self):
@@ -129,7 +129,7 @@ class TestPipeline(BaseTestPipeline):
 
 if __name__ == '__main__':
     opts = Opts().parse_args()
-    val_pipeline = TestPipeline(opts)
+    val_pipeline = GradientTestPipeline(opts)
     val_pipeline.inference()
 
         

@@ -1,7 +1,7 @@
 import os
 import torch
 from theseus.opt import Config
-from theseus.base.pipeline import BasePipeline
+from theseus.base.pipeline import BasePipeline, BaseTestPipeline
 from theseus.base.optimizers import OPTIM_REGISTRY, SCHEDULER_REGISTRY
 from theseus.classification.augmentations import TRANSFORM_REGISTRY
 from source.losses import LOSS_REGISTRY
@@ -80,3 +80,18 @@ class Pipeline(BasePipeline):
             self.optimizer = load_state_dict(self.optimizer, state_dict, 'optimizer')
             iters = load_state_dict(None, state_dict, 'iters')
             self.last_epoch = iters//len(self.train_dataloader) - 1
+
+
+class TestPipeline(BaseTestPipeline):
+
+    def __init__(
+        self,
+        opt: Config
+    ):
+        super(Pipeline, self).__init__(opt)
+
+    def init_loading(self):
+        self.weights = self.opt['global']['weights']
+        if self.weights:
+            state_dict = torch.load(self.weights, map_location='cpu')
+            self.model = load_state_dict(self.model, state_dict, 'model')
