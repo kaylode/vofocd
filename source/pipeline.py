@@ -61,17 +61,17 @@ class Pipeline(BasePipeline):
         if self.stage == 'normal':
             self.pretrained = self.opt['global']['pretrained']
             if self.pretrained:
-                state_dict = torch.load(self.pretrained)
+                state_dict = torch.load(self.pretrained, map_location='cpu')
                 self.model.model = load_state_dict(self.model.model, state_dict, 'model')
         elif self.stage == 'distillation':
             self.pretrained_teacher = self.opt['global']['pretrained_teacher']
             if self.pretrained_teacher:
-                state_dict = torch.load(self.pretrained_teacher)
+                state_dict = torch.load(self.pretrained_teacher, map_location='cpu')
                 self.model.model.teacher = load_state_dict(self.model.model.teacher, state_dict, 'model')
 
             self.pretrained_student = self.opt['global']['pretrained_student']
             if self.pretrained_student:
-                state_dict = torch.load(self.pretrained_student)
+                state_dict = torch.load(self.pretrained_student, map_location='cpu')
                 self.model.model.student = load_state_dict(self.model.model.student, state_dict, 'model')
 
         if self.resume:
