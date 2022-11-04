@@ -28,14 +28,19 @@ sh scripts/download_data.sh
 
 ## **Training & Testing**
 
-Run train script:
-```
-sh scripts/train.sh {exp_name} {save_dir}
-```
+Run train scripts:
+
+- Raw images --> convnext_small: `sh scripts/train_small_only.sh`
+- Raw images --> convnext_nano: `sh scripts/train_nano_only.sh`
+- Raw images --> unet --> convnext_nano: `sh scripts/train_nano_unet.sh`
+- Raw images --> medtex (small+nano): `sh scripts/train_medtex_basic.sh`
+- Raw images (teacher) + Ersgan (student) --> medtex (small+nano): `sh scripts/train_medtex_ersgan_1.sh`
+- Raw images (teacher, student) + Ersgan (student) --> medtex (small+nano): Upcoming
+
 
 Run eval script:
 ```
-sh scripts/eval.sh {config_path} {weight}
+sh scripts/eval.sh {run_name} {config_path} {weight}
 ```
 
 

@@ -8,22 +8,20 @@ global:
   weights: null
 
 model:
-  name: BaseTimmModel
+  name: MedTEXTeacher
   args:
-    name: convnext_small
-    from_pretrained: False
-    num_classes: 41
+    model_name: convnext_small
 
 data:
   dataset:
     name: ImageDataset
     args:
       image_dir: data/images
-      txt_classnames: configs/sample/classes.txt
+      txt_classnames: configs/classification/classes.txt
 
   dataloader:
-    name: DataLoader
+    name: DataLoaderWithCollator
     args:
-      batch_size: 64
-      drop_last: True
-      shuffle: True
+      batch_size: 16
+      drop_last: False
+      shuffle: False

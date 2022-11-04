@@ -1,4 +1,8 @@
 from theseus.classification.losses import LOSS_REGISTRY
-from .kd_loss import MedTEXLoss
+from .gaussian_loss import GaussianLoss
+from .kldiv_loss import TemperatureScaledKLDivLoss
+from .medtex_loss import MedTEXCELoss
 
-LOSS_REGISTRY.register(MedTEXLoss)
+LOSS_REGISTRY.register(GaussianLoss)
+LOSS_REGISTRY.register(MedTEXCELoss)
+LOSS_REGISTRY.register(TemperatureScaledKLDivLoss)

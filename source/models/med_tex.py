@@ -47,24 +47,39 @@ class MedTEXStudent(MedTEX):
         num_classes: int = 1000,
         classnames: Optional[List] = None,
         freeze: bool = False,
+        use_explainer: bool = True,
         **kwargs
     ):
         super().__init__(model_name, pretrained, num_classes, classnames, freeze)
-        self.auto_encoder = NestedUNet(
-            in_ch=3, out_ch=1
-        )
+
+        self.use_explainer = use_explainer
+        if self.use_explainer:
+            self.auto_encoder = NestedUNet(
+                in_ch=3, out_ch=1
+            )
 
         # self.auto_encoder = ConvAutoencoder()
 
     def forward(self, batch: Dict, device: torch.device):
         x = move_to(batch['inputs'], device)
-        pixel_map = self.auto_encoder(x)
-        x_hat = pixel_map*x
-        outputs, features = self.model(x_hat, return_features=True)
-        return {
-            'outputs': outputs, 
-            'inter_features': features
-        }
+
+        if self.use_explainer:
+            pixel_map = self.auto_encoder(x)
+            x = pixel_map*x
+
+        outputs, features = self.model(x, return_features=True)
+
+        if self.use_explainer:
+            return {
+                'outputs': outputs, 
+                'inter_features': features,
+                'pixel_maps': pixel_map.detach()
+            }
+        else:
+            return {
+                'outputs': outputs, 
+                'inter_features': features
+            }
 
 class MedTEXTeacher(MedTEX):
     """
@@ -101,11 +116,12 @@ class MedTEXFramework(nn.Module):
         self, 
         classnames: str = None,
         num_classes: int = 1000,
+        student_explainer: bool = True,
         **kwargs):
 
         super().__init__()
         self.teacher = MedTEXTeacher(
-            'convnext_large',
+            'convnext_small',
             num_classes=num_classes,
             classnames=classnames,
             freeze=True
@@ -114,14 +130,14 @@ class MedTEXFramework(nn.Module):
         self.teacher.eval()
 
         self.student = MedTEXStudent(
-            'convnext_small',
+            'convnext_nano',
             num_classes=num_classes,
             classnames=classnames,
-            freeze=False
+            freeze=False,
+            use_explainer=student_explainer
         )
 
         self.subnetwork = Subnetwork(self.student.feature_dims, self.teacher.feature_dims)
-            
 
         self.num_classes = num_classes
         self.classnames = classnames
@@ -141,13 +157,15 @@ class MedTEXFramework(nn.Module):
             teacher_output_dict = self.teacher(batch, device)
             teacher_outputs, teacher_features = teacher_output_dict['outputs'], teacher_output_dict['inter_features']
 
-        mapped_student_features = self.subnetwork(student_features)
+        mapped_student_features, student_variances = self.subnetwork(student_features)
 
         return {
             'outputs': student_outputs,
+            'pixel_maps': student_output_dict['pixel_maps'],
             'student_outputs': {
                 'outputs': student_outputs,
                 'inter_features': mapped_student_features,
+                'variances': student_variances
             },
             'teacher_outputs': {
                 'outputs': teacher_outputs,
@@ -164,7 +182,9 @@ class MedTEXFramework(nn.Module):
         device: `torch.device`
             current device 
         """
-        outputs = self.forward(adict, device)['outputs']
+        output_dict = self.forward(adict, device)
+        outputs = output_dict['outputs']
+        pixel_maps = output_dict['pixel_maps']
 
         if not adict.get('multilabel'):
             outputs, probs = logits2labels(outputs, label_type='multiclass', return_probs=True)
@@ -188,4 +208,5 @@ class MedTEXFramework(nn.Module):
             'labels': classids,
             'confidences': probs, 
             'names': classnames,
+            'pixel_maps': pixel_maps,
         }
