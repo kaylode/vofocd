@@ -1,10 +1,10 @@
 global:
-  exp_name: convnext_small_student
+  exp_name: convnext_nano_student
   exist_ok: false
   debug: true
-  cfg_transform: configs/classification/transform.yaml
+  cfg_transform: configs/transform.yaml
   save_dir: runs
-  device: cuda:1
+  device: cuda:0
   pretrained: null
   resume: null
   stage: normal
@@ -25,11 +25,15 @@ callbacks:
       best_key: bl_acc
   - name: ClassificationVisualizerCallbacks
     args: null
+  - name: WandbCallbacks
+    args:
+      username: vocal-fold-isbi
+      project_name: vocal-fold-isbi
 model:
   name: MedTEXStudent
   args:
     model_name: convnext_nano
-    pretrained: True
+    pretrained: False
 loss:
   name: ClassificationCELoss
 metrics:
@@ -43,8 +47,8 @@ metrics:
 optimizer:
   name: AdamW
   args:
-    lr: 0.0003
-    weight_decay: 0.0005
+    lr: 0.001
+    weight_decay: 0.00005
     betas:
       - 0.937
       - 0.999
@@ -52,24 +56,24 @@ scheduler:
   name: SchedulerWrapper
   args:
     scheduler_name: cosine2
-    t_initial: 30
-    t_mul: 0.95
-    eta_mul: 0.95
+    t_initial: 50
+    t_mul: 0.99
+    eta_mul: 0.99
     eta_min: 1.0e-06
 data:
   dataset:
     train:
       name: ClassificationCSVDataset
       args:
-        image_dir: data/Train
-        csv_path: data/output_1_train.csv
-        txt_classnames: configs/classification/classes.txt
+        image_dir: data/raw
+        csv_path: data/csvs/output_1_train.csv
+        txt_classnames: configs/classes.txt
     val:
       name: ClassificationCSVDataset
       args:
-        image_dir: data/Train
-        csv_path: data/output_1_val.csv
-        txt_classnames: configs/classification/classes.txt
+        image_dir: data/raw
+        csv_path: data/csvs/output_1_val.csv
+        txt_classnames: configs/classes.txt
   dataloader:
     train:
       name: DataLoaderWithCollator

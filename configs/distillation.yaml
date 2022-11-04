@@ -1,13 +1,14 @@
 global:
-  exp_name: convnext_large_teacher
+  exp_name: default_kd
   exist_ok: false
-  debug: true
-  cfg_transform: configs/classification/transform.yaml
+  debug: false
+  cfg_transform: configs/transform.yaml
   save_dir: runs
-  device: cuda:1
-  pretrained: null
+  device: cuda:0
+  pretrained_teacher: null
+  pretrained_student: null
   resume: null
-  stage: normal
+  stage: distillation
 trainer:
   name: SupervisedTrainer
   args:
@@ -30,12 +31,18 @@ callbacks:
       username: vocal-fold-isbi
       project_name: vocal-fold-isbi
 model:
-  name: MedTEXTeacher
+  name: KDFramework
   args:
-    model_name: convnext_small
-    pretrained: True
 loss:
-  name: ClassificationCELoss
+  name: MultiLoss
+  args:
+    weights: [0.2, 1.0]
+    losses:  
+      - name: TemperatureScaledKLDivLoss
+        args:
+          temperature: 10.0
+      - name: ClassificationCELoss
+        args:
 metrics:
   - name: Accuracy
     args: null
@@ -47,8 +54,8 @@ metrics:
 optimizer:
   name: AdamW
   args:
-    lr: 0.0005
-    weight_decay: 0.0005
+    lr: 0.001
+    weight_decay: 0.00005
     betas:
       - 0.937
       - 0.999
@@ -56,29 +63,29 @@ scheduler:
   name: SchedulerWrapper
   args:
     scheduler_name: cosine2
-    t_initial: 30
-    t_mul: 0.95
-    eta_mul: 0.95
+    t_initial: 50
+    t_mul: 0.99
+    eta_mul: 0.99
     eta_min: 1.0e-06
 data:
   dataset:
     train:
       name: ClassificationCSVDataset
       args:
-        image_dir: data/Train
-        csv_path: data/output_1_train.csv
-        txt_classnames: configs/classification/classes.txt
+        image_dir: data/raw
+        csv_path: data/csvs/output_1_train.csv
+        txt_classnames: configs/classes.txt
     val:
       name: ClassificationCSVDataset
       args:
-        image_dir: data/Train
-        csv_path: data/output_1_val.csv
-        txt_classnames: configs/classification/classes.txt
+        image_dir: data/raw
+        csv_path: data/csvs/output_1_val.csv
+        txt_classnames: configs/classes.txt
   dataloader:
     train:
       name: DataLoaderWithCollator
       args:
-        batch_size: 64
+        batch_size: 32
         drop_last: true
         shuffle: false
         sampler:
@@ -87,6 +94,6 @@ data:
     val:
       name: DataLoaderWithCollator
       args:
-        batch_size: 64
+        batch_size: 32
         drop_last: false
         shuffle: true

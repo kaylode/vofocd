@@ -1,0 +1,92 @@
+global:
+  exp_name: convnext_large_teacher
+  exist_ok: false
+  debug: true
+  cfg_transform: configs/classification/transform.yaml
+  save_dir: runs
+  device: cuda:1
+  pretrained: null
+  resume: null
+  stage: normal
+trainer:
+  name: SupervisedTrainer
+  args:
+    num_iterations: 30000
+    clip_grad: 10.0
+    evaluate_interval: 1
+    print_interval: 20
+    save_interval: 1000
+    use_fp16: true
+callbacks:
+  - name: LoggerCallbacks
+    args: null
+  - name: CheckpointCallbacks
+    args:
+      best_key: bl_acc
+  - name: ClassificationVisualizerCallbacks
+    args: null
+  - name: WandbCallbacks
+    args:
+      username: vocal-fold-isbi
+      project_name: vocal-fold-isbi
+model:
+  name: MedTEXTeacher
+  args:
+    model_name: convnext_small
+    pretrained: True
+loss:
+  name: ClassificationCELoss
+metrics:
+  - name: Accuracy
+    args: null
+  - name: BalancedAccuracyMetric
+    args: null
+  - name: F1ScoreMetric
+    args:
+      average: weighted
+optimizer:
+  name: AdamW
+  args:
+    lr: 0.001
+    weight_decay: 0.0005
+    betas:
+      - 0.937
+      - 0.999
+scheduler:
+  name: SchedulerWrapper
+  args:
+    scheduler_name: cosine2
+    t_initial: 30
+    t_mul: 0.95
+    eta_mul: 0.95
+    eta_min: 1.0e-06
+data:
+  dataset:
+    train:
+      name: ClassificationCSVDataset
+      args:
+        image_dir: data/Train
+        csv_path: data/output_1_train.csv
+        txt_classnames: configs/classification/classes.txt
+    val:
+      name: ClassificationCSVDataset
+      args:
+        image_dir: data/Train
+        csv_path: data/output_1_val.csv
+        txt_classnames: configs/classification/classes.txt
+  dataloader:
+    train:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 128
+        drop_last: true
+        shuffle: false
+        sampler:
+          name: BalanceSampler
+          args:
+    val:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 128
+        drop_last: false
+        shuffle: true
