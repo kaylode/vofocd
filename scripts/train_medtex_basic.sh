@@ -1,4 +1,4 @@
-EXP_NAME=$1
+EXP_NAME=medtex_basic
 PYTHONPATH=. python3 tools/train.py \
               -c configs/medtex_basic.yaml \
               -o global.save_dir=runs \
