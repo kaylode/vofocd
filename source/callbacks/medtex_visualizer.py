@@ -1,6 +1,7 @@
 from typing import Dict
 import matplotlib.pyplot as plt
 import torch
+import numpy as np
 from torchvision.transforms import functional as TFF
 
 from theseus.base.callbacks.base_callbacks import Callbacks
@@ -24,6 +25,7 @@ class MedTEXVisualizationCallbacks(Callbacks):
 
     @torch.no_grad() #enable grad for CAM
     def on_val_epoch_end(self, logs: Dict=None):
+    # def on_train_epoch_start(self, logs: Dict=None):
         """
         After finish validation
         """
@@ -54,8 +56,14 @@ class MedTEXVisualizationCallbacks(Callbacks):
             score = scores[idx]
             pixel_map = pixel_maps[idx]
 
+            np_image = pixel_map.cpu().numpy().transpose(1,2,0)
+
+            image_weight = 0.7
             img_show = self.visualizer.denormalize(image)
-            self.visualizer.set_image(img_show)
+            cam = (1 - image_weight) * np_image + image_weight * img_show
+            cam = np.uint8(255 * cam)
+
+            self.visualizer.set_image(cam)
             if valloader.dataset.classnames is not None:
                 label = valloader.dataset.classnames[label]
                 target = valloader.dataset.classnames[target]
