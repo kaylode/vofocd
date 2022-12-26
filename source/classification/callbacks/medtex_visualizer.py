@@ -6,7 +6,7 @@ from torchvision.transforms import functional as TFF
 
 from theseus.base.callbacks.base_callbacks import Callbacks
 from theseus.base.utilities.loggers.observer import LoggerObserver
-from theseus.cv.base.utilities.visalization import Visualizer
+from theseus.cv.base.utilities.visualization import Visualizer
 
 
 LOGGER = LoggerObserver.getLogger("main")

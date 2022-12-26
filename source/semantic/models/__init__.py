@@ -1,1 +1,0 @@
-from .detr_convnext import DETRConvnext
