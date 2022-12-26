@@ -6,7 +6,6 @@ import torch.nn as nn
 import numpy as np
 from PIL import Image
 from pycocotools.coco import COCO
-from source.detection.ultilities.box import change_box_order
 from .base import DetectionDataset
 
 class COCODataset(DetectionDataset):

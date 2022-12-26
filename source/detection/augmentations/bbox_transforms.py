@@ -1,4 +1,5 @@
 import torch
+from albumentations.core.transforms_interface import DualTransform
 
 class BoxOrder(DualTransform):
     """
