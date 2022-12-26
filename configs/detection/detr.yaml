@@ -24,11 +24,7 @@ model:
   args:
     model_name: detr
 loss:
-  name: MultiLoss
-  args:
-    weights: null
-    losses:
-      - name: DETRLosses
+  name: DETRLosses
 metrics:
   - name: PixelAccuracy
     args:
@@ -55,19 +51,17 @@ scheduler:
 data:
   dataset:
     train:
-      name: FoodCSVDataset
+      name: DetectionDataset
       args:
         image_dir: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/train/img
-        mask_dir: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/train/mask
-        csv_path: /content/data/UECFOODPIXCOMPLETE/data/train9000.txt
+        label_path: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/train/mask
         txt_classnames: /content/data/UECFOODPIXCOMPLETE/data/category.txt
 
     val:
-      name: FoodCSVDataset
+      name: DetectionDataset
       args:
         image_dir: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/test/img
-        mask_dir: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/test/mask
-        csv_path: /content/data/UECFOODPIXCOMPLETE/data/test1000.txt
+        label_path: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/test/mask
         txt_classnames: /content/data/UECFOODPIXCOMPLETE/data/category.txt
   dataloader:
     train:
