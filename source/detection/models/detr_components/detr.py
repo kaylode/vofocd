@@ -14,7 +14,6 @@ from source.detection.models.detr_utils.misc import (
 )
 
 from .backbone import build_backbone
-from .matcher import HungarianMatcher
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
 from .transformer import build_transformer

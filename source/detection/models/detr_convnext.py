@@ -27,6 +27,7 @@ class DETRConvnext(nn.Module):
         model_name: str,
         backbone_name: str = 'convnext_base',
         num_classes: int = 1000,
+        num_queries: int = 100,
         classnames: Optional[List] = None,
         freeze: bool = False,
         **kwargs

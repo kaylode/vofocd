@@ -52,21 +52,39 @@ class DetectionDataset(nn.Module):
         print(data.keys())
         self.fns.append([image_name, mask_name])
 
-    def _load_mask(self, label_path):
-          mask = Image.open(label_path).convert('RGB')
-          mask = np.array(mask)[:,:,::-1] # (H,W,3)
-          mask = np.argmax(mask, axis=-1)  # (H,W) with each pixel value represent one class
-          return mask
-
-    def _encode_masks(self, masks):
-        """
-        Input masks from _load_mask(), but in shape [B, H, W]
-        Output should be one-hot encoding of segmentation masks [B, NC, H, W]
-        """
+     def __getitem__(self, idx):
         
-        one_hot = torch.nn.functional.one_hot(masks.long(), num_classes=self.num_classes) # (B,H,W,NC)
-        one_hot = one_hot.permute(0, 3, 1, 2) # (B,NC,H,W)
-        return one_hot.float()
+        image, boxes, labels, img_id, img_name, ori_width, ori_height = self.load_augment(idx)
+        if self.transforms:
+            item = self.transforms(image=image, bboxes=boxes, class_labels=labels)
+            # Normalize
+            image = item['image']
+            boxes = item['bboxes']
+            labels = item['class_labels'] 
+            boxes = np.array([np.asarray(i) for i in boxes])
+            labels = np.array(labels)
+
+        if len(boxes) == 0:
+            return self.__getitem__((idx+1)%len(self.image_ids))
+        labels = torch.LongTensor(labels) # starts from 1
+        boxes = torch.as_tensor(boxes, dtype=torch.float32) 
+
+        target = {}
+
+        if self.box_format == 'yxyx':
+            boxes = change_box_order(boxes, 'xyxy2yxyx')
+
+        target['boxes'] = boxes
+        target['labels'] = labels
+        
+
+        return {
+            'img': image,
+            'target': target,
+            'img_id': img_id,
+            'img_name': img_name,
+            'ori_size': [ori_width, ori_height]
+        }
 
     def collate_fn(self, batch):
         imgs = torch.stack([i['input'] for i in batch])
@@ -81,4 +99,5 @@ class DetectionDataset(nn.Module):
             'img_names': img_names,
             'ori_sizes': ori_sizes
         }
+
 
