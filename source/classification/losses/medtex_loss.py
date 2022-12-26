@@ -1,7 +1,7 @@
 from typing import Any, Dict
 import torch
 from torch import nn
-from theseus.utilities.cuda import detach
+from theseus.base.utilities.cuda import detach
 
 class MedTEXCELoss(nn.Module):
     r"""CELoss is warper of cross-entropy loss"""

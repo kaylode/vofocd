@@ -1,1 +1,1 @@
-pip install git+https://github.com/kaylode/theseus.git@V1.1.0#egg=theseus[cv,cv.classification,cv.semantic]
+git+https://github.com/kaylode/theseus.git@V1.1.0#egg=theseus[cv,cv.classification,cv.semantic]
