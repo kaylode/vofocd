@@ -1,42 +1,38 @@
-import os
-import torch
-from theseus.opt import Config
-from theseus.base.pipeline import BasePipeline, BaseTestPipeline
-from theseus.base.optimizers import OPTIM_REGISTRY, SCHEDULER_REGISTRY
-from theseus.cv.classification.augmentations import TRANSFORM_REGISTRY
-from source.classification.losses import LOSS_REGISTRY
-from theseus.cv.classification.datasets import DATASET_REGISTRY, DATALOADER_REGISTRY
-from theseus.cv.classification.trainer import TRAINER_REGISTRY
-from theseus.cv.classification.metrics import METRIC_REGISTRY
-from source.classification.models import MODEL_REGISTRY
-from source.classification.callbacks import CALLBACKS_REGISTRY
-from theseus.base.utilities.loading import load_state_dict
-from theseus.base.utilities.loggers import LoggerObserver
+from source.detection.models import MODEL_REGISTRY
+from source.detection.losses import LOSS_REGISTRY
+from source.detection.datasets import DATASET_REGISTRY
+from theseus.base.pipeline import BasePipeline
 from theseus.base.utilities.getter import (get_instance, get_instance_recursively)
-from theseus.base.utilities.cuda import move_to
 
-
-class DetPipeline(BasePipeline):
+class Pipeline(BasePipeline):
     """docstring for Pipeline."""
 
     def __init__(
         self,
-        opt: Config
+        opt
     ):
         super(Pipeline, self).__init__(opt)
         self.opt = opt
- 
+
     def init_registry(self):
+        super().init_registry()
         self.model_registry = MODEL_REGISTRY
         self.dataset_registry = DATASET_REGISTRY
-        self.dataloader_registry = DATALOADER_REGISTRY
-        self.metric_registry = METRIC_REGISTRY
         self.loss_registry = LOSS_REGISTRY
-        self.optimizer_registry = OPTIM_REGISTRY
-        self.scheduler_registry = SCHEDULER_REGISTRY
-        self.callbacks_registry = CALLBACKS_REGISTRY
-        self.trainer_registry = TRAINER_REGISTRY
-        self.transform_registry = TRANSFORM_REGISTRY
-        self.logger.text(
-            "Overidding registry in pipeline...", LoggerObserver.INFO
-        )
+
+    def init_criterion(self):
+        CLASSNAMES = self.val_dataset.classnames
+        criterion = get_instance_recursively(
+            self.opt["loss"], 
+            registry=self.loss_registry,
+            num_classes=len(CLASSNAMES))
+        criterion = move_to(criterion, self.device)
+        return criterion
+
+    def init_metrics(self):
+        CLASSNAMES = self.val_dataset.classnames
+        self.metrics = get_instance_recursively(
+            self.opt['metrics'], 
+            registry=self.metric_registry, 
+            num_classes=len(CLASSNAMES),
+            classnames=CLASSNAMES)

@@ -4,8 +4,7 @@ from torch import nn
 from theseus.base.utilities.cuda import move_to
 from .base import SetCriterion
 from .matcher import HungarianMatcher
-from theseus.cv.classification.losses import LOSS_REGISTRY
-LOSS_REGISTRY.register(DETRLosses)
+
 
 class DETRLosses(nn.Module):
     r"""CELoss is warper of cross-entropy loss"""
