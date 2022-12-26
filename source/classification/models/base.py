@@ -2,7 +2,7 @@ from typing import Dict, List, Any, Optional
 import torch
 import torch.nn as nn
 from theseus.base.utilities.cuda import move_to, detach
-from theseus.cv.classification.utilities.logits import logits2labels
+from theseus.base.utilities.logits import logits2labels
 
 from .backbone.convnext import model_factory
 

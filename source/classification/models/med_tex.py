@@ -2,7 +2,7 @@ from typing import Dict, List, Any, Optional
 import torch
 from torch import nn
 from theseus.base.utilities.cuda import move_to, detach
-from theseus.cv.classification.utilities.logits import logits2labels
+from theseus.base.utilities.logits import logits2labels
 
 from .base import MedTEX
 from .explainer import ConvAutoencoder, NestedUNet
