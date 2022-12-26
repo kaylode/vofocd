@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from PIL import Image
 
-import source.semantic.models.detr_utils.box_ops as box_ops
+import source.detection.models.detr_utils.box_ops as box_ops
 from source.detection.models.detr_utils.misc import NestedTensor, interpolate, nested_tensor_from_tensor_list
 
 try:

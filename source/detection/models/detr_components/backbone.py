@@ -14,7 +14,7 @@ from source.detection.models.detr_utils.misc import NestedTensor
 from .position_encoding import build_position_encoding
 import timm
 
-from source.classification.models.backbone import model_factory
+from source.classification.models.backbone.convnext import model_factory
 
 
 class BackboneBase(nn.Module):
