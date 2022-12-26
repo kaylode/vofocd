@@ -42,7 +42,7 @@ class DETRConvnext(nn.Module):
         backbone = build_backbone(
             backbone_name, 
             hidden_dim=kwargs.get('hidden_dim', 256), 
-            position_embedding=kwargs.get('position_embedding', 256), 
+            position_embedding=kwargs.get('position_embedding', 'sine'), 
             freeze_backbone=kwargs.get('freeze_backbone', False), 
             dilation=kwargs.get('dilation', True),
             return_interm_layers=False

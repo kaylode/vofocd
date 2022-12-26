@@ -23,15 +23,29 @@ model:
   name: DETRConvnext
   args:
     model_name: detr
+    hidden_dim: 256
+    position_embedding: sine
+    freeze_backbone: false
+    dilation: true
+    dropout: 0.1
+    nheads: 8
+    dim_feedforward: 2048
+    enc_layers: 6
+    dec_layers: 6
+    pre_norm: True
 loss:
   name: DETRLosses
-metrics:
-  - name: PixelAccuracy
-    args:
-      ignore_index: 0
-  - name: DiceScore
-    args:
-      ignore_index: 0
+  args:
+    loss_ce: 1
+    loss_bbox: 5
+    loss_giou: 2
+    loss_mask: null
+    loss_dice: null
+    cost_class: 1
+    cost_bbox: 5
+    cost_giou: 2
+    eos_coef: 0.1
+metrics: []
 optimizer:
   name: AdamW
   args:

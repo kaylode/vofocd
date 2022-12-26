@@ -1,10 +1,12 @@
 from typing import List, Optional
 import os
+import cv2
 import torch
 import torch.nn as nn
 import numpy as np
 from PIL import Image
 from pycocotools.coco import COCO
+from source.detection.ultilities.box import change_box_order
 from .base import DetectionDataset
 
 class COCODataset(DetectionDataset):
@@ -25,24 +27,36 @@ class COCODataset(DetectionDataset):
             self, 
             image_dir: str, 
             label_path: str, 
-            txt_classnames: str,
             transform: Optional[List] = None,
             **kwargs):
-        super(COCODataset, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.image_dir = image_dir
         self.label_path = label_path
         self.transform = transform
-        self.txt_classnames = txt_classnames
         self._load_data()
 
     def _load_data(self):
-        self.classnames = open(self.txt_classnames, 'r').read().splitlines()
-        # Mapping between classnames and indices
-        for idx, classname in enumerate(self.classnames):
-            self.classes_idx[classname] = idx
-        self.num_classes = len(self.classnames)
         self.fns = COCO(self.label_path)
         self.image_ids = self.fns.getImgIds()
+        # load class names (name -> label)
+        categories = self.fns.loadCats(self.fns.getCatIds())
+        categories.sort(key=lambda x: x['id'])
+
+        self.classes = {}
+        self.idx_mapping = {}
+        self.classnames = []
+        for c in categories:
+            idx = len(self.classes) + 1
+            self.classes[c['name']] = idx
+            self.idx_mapping[c['id']] = idx
+            self.classnames.append(c['name'])
+
+        # also load the reverse (label -> name)
+        self.labels = {}
+        for key, value in self.classes.items():
+            self.labels[value] = key
+
+        self.num_classes = len(self.labels)
 
     def load_image(self, image_index):
         image_info = self.fns.loadImgs(self.image_ids[image_index])[0]

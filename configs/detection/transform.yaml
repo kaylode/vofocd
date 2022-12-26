@@ -1,7 +1,17 @@
 train:
   name: AlbCompose
   args:
+    bbox_params: 
+      name: AlbBboxParams
+      args: 
+        format: 'pascal_voc' 
+        min_area: 0 
+        min_visibility: 0
+        label_fields: ['class_labels']
     transforms:
+      - name: BoxOrder
+        args: 
+          order: xywh2xyxy
       - name: AlbResize
         args:
           width: 256
@@ -27,7 +37,17 @@ train:
 val:
   name: AlbCompose
   args:
+    bbox_params: 
+      name: AlbBboxParams
+      args: 
+        format: 'pascal_voc' 
+        min_area: 0 
+        min_visibility: 0
+        label_fields: ['class_labels']
     transforms:
+      - name: BoxOrder
+        args: 
+          order: xywh2xyxy
       - name: AlbResize
         args:
           width: 256

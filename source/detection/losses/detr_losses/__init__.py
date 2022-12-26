@@ -19,13 +19,13 @@ class DETRLosses(nn.Module):
             'loss_giou': loss_giou,
         }
 
+        matcher = HungarianMatcher(
+            cost_class=cost_class, 
+            cost_bbox=cost_bbox, 
+            cost_giou=cost_giou
+        )
+        
         if loss_mask is not None and loss_dice is not None:
-            matcher = HungarianMatcher(
-                cost_class=cost_class, 
-                cost_bbox=cost_bbox, 
-                cost_giou=cost_giou
-            )
-
             self.weight_dict.update({
                 'loss_mask': loss_mask,
                 'loss_dice': loss_dice

@@ -51,7 +51,7 @@ class Backbone_ConvNext(BackboneBase):
                  train_backbone: bool,
                  return_interm_layers: bool,
                  dilation: bool):
-        backbone = model_factory(name)
+        backbone = model_factory[name]()
         num_channels = 1024
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 

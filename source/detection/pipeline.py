@@ -1,8 +1,10 @@
 from source.detection.models import MODEL_REGISTRY
 from source.detection.losses import LOSS_REGISTRY
 from source.detection.datasets import DATASET_REGISTRY
-from theseus.base.pipeline import BasePipeline
+from source.detection.augmentations import TRANSFORM_REGISTRY
+from theseus.cv.classification.pipeline import BasePipeline
 from theseus.base.utilities.getter import (get_instance, get_instance_recursively)
+from theseus.base.utilities.cuda import move_to
 
 class Pipeline(BasePipeline):
     """docstring for Pipeline."""
@@ -19,6 +21,7 @@ class Pipeline(BasePipeline):
         self.model_registry = MODEL_REGISTRY
         self.dataset_registry = DATASET_REGISTRY
         self.loss_registry = LOSS_REGISTRY
+        self.transform_registry = TRANSFORM_REGISTRY
 
     def init_criterion(self):
         CLASSNAMES = self.val_dataset.classnames

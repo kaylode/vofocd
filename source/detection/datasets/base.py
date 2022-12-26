@@ -11,7 +11,7 @@ class DetectionDataset(torch.utils.data.Dataset):
         self,
         **kwargs
     ):
-        super(DetectionDataset, self).__init__(**kwargs)
+        super().__init__()
         self.classes_idx = {}
         self.classnames = None
         self.transform = None
@@ -30,8 +30,8 @@ class DetectionDataset(torch.utils.data.Dataset):
         (image, boxes, labels, img_id, 
             img_name, ori_width, ori_height) = self.load_image_and_boxes(idx)
 
-        if self.transforms:
-            item = self.transforms(image=image, bboxes=boxes, class_labels=labels)
+        if self.transform:
+            item = self.transform(image=image, bboxes=boxes, class_labels=labels)
             # Normalize
             image = item['image']
             boxes = item['bboxes']
