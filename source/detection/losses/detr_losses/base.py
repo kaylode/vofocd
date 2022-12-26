@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from source.detection.models.detr_utils import box_ops
 from source.detection.models.detr_utils.misc import (NestedTensor, nested_tensor_from_tensor_list,

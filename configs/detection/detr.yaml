@@ -51,18 +51,18 @@ scheduler:
 data:
   dataset:
     train:
-      name: DetectionDataset
+      name: COCODataset
       args:
-        image_dir: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/train/img
-        label_path: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/train/mask
-        txt_classnames: /content/data/UECFOODPIXCOMPLETE/data/category.txt
+        image_dir: /content/data/aihcm20/images
+        label_path: /content/data/aihcm20/annotations/annotations_train.json
+        txt_classnames: /content/data/aihcm20/classnames.txt
 
     val:
-      name: DetectionDataset
+      name: COCODataset
       args:
-        image_dir: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/test/img
-        label_path: /content/data/UECFOODPIXCOMPLETE/data/UECFoodPIXCOMPLETE/test/mask
-        txt_classnames: /content/data/UECFOODPIXCOMPLETE/data/category.txt
+        image_dir: /content/data/aihcm20/images
+        label_path: /content/data/aihcm20/annotations/annotations_val.json
+        txt_classnames: /content/data/aihcm20/classnames.txt
   dataloader:
     train:
       name: DataLoaderWithCollator

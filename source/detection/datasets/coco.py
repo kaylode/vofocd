@@ -1,13 +1,13 @@
 from typing import List, Optional
 import os
 import torch
+import torch.nn as nn
 import numpy as np
-import pandas as pd
 from PIL import Image
-# from theseus.cv.semantic.datasets.dataset import SemanticDataset
+from pycocotools.coco import COCO
+from .base import DetectionDataset
 
-
-class DetectionDataset(nn.Module):
+class COCODataset(DetectionDataset):
     r"""SemanticCSVDataset multi-labels segmentation dataset
     Reads in .csv file with structure below:
         filename   | label
@@ -28,7 +28,7 @@ class DetectionDataset(nn.Module):
             txt_classnames: str,
             transform: Optional[List] = None,
             **kwargs):
-        super(FoodCSVDataset, self).__init__(**kwargs)
+        super(COCODataset, self).__init__(**kwargs)
         self.image_dir = image_dir
         self.label_path = label_path
         self.transform = transform
@@ -36,68 +36,86 @@ class DetectionDataset(nn.Module):
         self._load_data()
 
     def _load_data(self):
-        """
-        Read data from csv and load into memory
-        """
-
-        df = pd.read_csv(self.txt_classnames, header=None, sep="\t")
-        self.classnames = df[1].tolist()
-
+        self.classnames = open(self.txt_classnames, 'r').read().splitlines()
         # Mapping between classnames and indices
         for idx, classname in enumerate(self.classnames):
             self.classes_idx[classname] = idx
         self.num_classes = len(self.classnames)
+        self.fns = COCO(self.label_path)
+        self.image_ids = self.fns.getImgIds()
 
-        data = json.load(open(self.label_path, 'r'))
-        print(data.keys())
-        self.fns.append([image_name, mask_name])
+    def load_image(self, image_index):
+        image_info = self.fns.loadImgs(self.image_ids[image_index])[0]
+        path = os.path.join(self.image_dir, image_info['file_name'])
+        image = cv2.imread(path)
+        height, width, c = image.shape
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
+        image /= 255.0
+        return image, image_info['file_name'], width, height
 
-     def __getitem__(self, idx):
+    def load_annotations(self, image_index):
+        # get ground truth annotations
+        annotations_ids = self.fns.getAnnIds(
+            imgIds=self.image_ids[image_index], 
+            iscrowd=None
+        )
+        annotations = np.zeros((0, 5))
+
+        # some images appear to miss annotations
+        if len(annotations_ids) == 0:
+            return annotations
         
-        image, boxes, labels, img_id, img_name, ori_width, ori_height = self.load_augment(idx)
-        if self.transforms:
-            item = self.transforms(image=image, bboxes=boxes, class_labels=labels)
-            # Normalize
-            image = item['image']
-            boxes = item['bboxes']
-            labels = item['class_labels'] 
-            boxes = np.array([np.asarray(i) for i in boxes])
-            labels = np.array(labels)
+        # parse annotations
+        coco_annotations = self.fns.loadAnns(annotations_ids)
+        for idx, a in enumerate(coco_annotations):
 
-        if len(boxes) == 0:
-            return self.__getitem__((idx+1)%len(self.image_ids))
-        labels = torch.LongTensor(labels) # starts from 1
-        boxes = torch.as_tensor(boxes, dtype=torch.float32) 
+            # some annotations have basically no width / height, skip them
+            if a['bbox'][2] <= 2 or a['bbox'][3] <= 2:
+                continue
+            
+            # some annotations have wrong coordinate
+            if a['bbox'][0] < 0 or a['bbox'][1] < 0:
+                continue
 
-        target = {}
+            annotation = np.zeros((1, 5))
+            annotation[0, :4] = a['bbox'] # xywh
+            annotation[0, 4] = self.idx_mapping[a['category_id']]
+            annotations = np.append(annotations, annotation, axis=0)
 
-        if self.box_format == 'yxyx':
-            boxes = change_box_order(boxes, 'xyxy2yxyx')
+        return annotations
 
-        target['boxes'] = boxes
-        target['labels'] = labels
-        
+    def load_image_and_boxes(self, idx):
+        """
+        Load an image and its boxes, also do scaling here
+        """
+        img, img_name, ori_width, ori_height  = self.load_image(idx)
+        img_id = self.image_ids[idx]
+        annot = self.load_annotations(idx)
+        box = annot[:, :4]
+        label = annot[:, -1]
 
-        return {
-            'img': image,
-            'target': target,
-            'img_id': img_id,
-            'img_name': img_name,
-            'ori_size': [ori_width, ori_height]
-        }
+        return img, box, label, img_id, img_name, ori_width, ori_height
 
     def collate_fn(self, batch):
-        imgs = torch.stack([i['input'] for i in batch])
-        masks = torch.stack([i['target']['mask'] for i in batch])
-        img_names = [i['img_name'] for i in batch]
-        ori_sizes = [i['ori_size'] for i in batch]
-        
-        masks = self._encode_masks(masks)
+        imgs = torch.stack([s['img'] for s in batch])
+        targets = [s['target'] for s in batch]
+        img_ids = [s['img_id'] for s in batch]
+        img_names = [s['img_name'] for s in batch]
+        img_scales = torch.tensor([1.0]*len(batch), dtype=torch.float)
+        img_sizes = torch.tensor([imgs[0].shape[-2:]]*len(batch), dtype=torch.float)
+        ori_sizes = [s['ori_size'] for s in batch]
+
         return {
-            'inputs': imgs,
-            'targets': masks,
+            'imgs': imgs, 
+            'targets': targets, 
+            'img_ids': img_ids,
             'img_names': img_names,
+            'img_sizes': img_sizes, 
+            'img_scales': img_scales,
             'ori_sizes': ori_sizes
         }
+
+    def __len__(self) -> int:
+        return len(self.image_ids)
 
 

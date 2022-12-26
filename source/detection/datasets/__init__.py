@@ -1,4 +1,4 @@
-from .coco import DetectionDataset
-from theseus.cv.classification.models import MODEL_REGISTRY
+from .coco import COCODataset
+from theseus.cv.classification.datasets import DATASET_REGISTRY
 
-MODEL_REGISTRY.register(DetectionDataset)
+DATASET_REGISTRY.register(COCODataset)
