@@ -5,8 +5,8 @@ import numpy as np
 from torchvision.transforms import functional as TFF
 
 from theseus.base.callbacks.base_callbacks import Callbacks
-from theseus.utilities.loggers.observer import LoggerObserver
-from theseus.utilities.visualization.visualizer import Visualizer
+from theseus.base.utilities.loggers.observer import LoggerObserver
+from theseus.base.utilities.visualization.visualizer import Visualizer
 
 
 LOGGER = LoggerObserver.getLogger("main")

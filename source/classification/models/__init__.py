@@ -1,4 +1,4 @@
-from theseus.classification.models import MODEL_REGISTRY
+from theseus.cv.classification.models import MODEL_REGISTRY
 
 from .med_tex import MedTEXStudent, MedTEXTeacher, MedTEXFramework
 from .kd import KDFramework
