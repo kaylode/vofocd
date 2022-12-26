@@ -10,7 +10,7 @@ import torchvision
 from torch import nn
 from torchvision.models._utils import IntermediateLayerGetter
 from typing import Dict, List
-from source.semantic.models.detr_utils.misc import NestedTensor
+from source.detection.models.detr_utils.misc import NestedTensor
 from .position_encoding import build_position_encoding
 import timm
 

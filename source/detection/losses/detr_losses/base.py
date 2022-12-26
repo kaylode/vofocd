@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from source.semantic.models.detr_utils import box_ops
-from source.semantic.models.detr_utils.misc import (NestedTensor, nested_tensor_from_tensor_list,
+from source.detection.models.detr_utils.misc import (NestedTensor, nested_tensor_from_tensor_list,
                        accuracy, get_world_size, interpolate,
                        is_dist_avail_and_initialized)
 

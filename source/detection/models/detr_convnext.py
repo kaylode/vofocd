@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from theseus.base.utilities.cuda import move_to, detach
 from theseus.base.utilities.logits import logits2labels
 from .detr_components.transformer import Transformer
-from .detr_components.backbone importbuild_backbone
+from .detr_components.backbone import build_backbone
 from .detr_components.detr import DETR
 
 class DETRConvnext(nn.Module):
