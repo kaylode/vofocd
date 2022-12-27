@@ -23,6 +23,16 @@ class Pipeline(BasePipeline):
         self.loss_registry = LOSS_REGISTRY
         self.transform_registry = TRANSFORM_REGISTRY
 
+    def init_model(self):
+        CLASSNAMES = self.val_dataset.classnames
+        model = get_instance(
+            self.opt["model"], 
+            registry=self.model_registry, 
+            num_classes=len(CLASSNAMES),
+            classnames=CLASSNAMES)
+        model = move_to(model, self.device)
+        return model
+
     def init_criterion(self):
         CLASSNAMES = self.val_dataset.classnames
         criterion = get_instance_recursively(

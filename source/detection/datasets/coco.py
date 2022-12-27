@@ -45,7 +45,7 @@ class COCODataset(DetectionDataset):
         self.idx_mapping = {}
         self.classnames = []
         for c in categories:
-            idx = len(self.classes) + 1
+            idx = len(self.classes) 
             self.classes[c['name']] = idx
             self.idx_mapping[c['id']] = idx
             self.classnames.append(c['name'])

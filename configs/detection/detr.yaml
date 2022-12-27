@@ -11,7 +11,7 @@ trainer:
   name: SupervisedTrainer
   args:
     num_iterations: 10000
-    clip_grad: 10.0
+    clip_grad: 0.1
     evaluate_interval: 1
     print_interval: 20
     save_interval: 1000
@@ -23,6 +23,7 @@ model:
   name: DETRConvnext
   args:
     model_name: detr
+    backbone_name: resnet50
     hidden_dim: 256
     position_embedding: sine
     freeze_backbone: false
@@ -49,7 +50,7 @@ metrics: []
 optimizer:
   name: AdamW
   args:
-    lr: 0.001
+    lr: 0.0001
     weight_decay: 0.0005
     betas:
       - 0.937
@@ -81,12 +82,12 @@ data:
     train:
       name: DataLoaderWithCollator
       args:
-        batch_size: 16
+        batch_size: 8
         drop_last: true
         shuffle: false
     val:
       name: DataLoaderWithCollator
       args:
-        batch_size: 16
+        batch_size: 8
         drop_last: false
         shuffle: true

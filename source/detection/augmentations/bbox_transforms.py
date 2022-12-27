@@ -1,9 +1,45 @@
 import torch
+import numpy as np
 from albumentations.core.transforms_interface import DualTransform
+
+class BoxNormalize(DualTransform):
+    '''
+    Bounding boxes normalization
+    '''
+
+    def __init__(self, order):
+        super().__init__(always_apply=True, p=1.0)
+        self.order = order
+    
+    def apply(self, image, **params):
+        return image
+
+    def apply_to_bbox(self, bbox, **params):
+        """
+        Normalize bbox
+        :return: (tensor) converted bounding bbox, size [N, 4]
+        """
+        height = params["rows"]
+        width = params["cols"]
+
+        bbox = list(bbox)
+        if self.order in ['xywh', 'cxcywh']:
+            bbox[0] /= width 
+            bbox[2] /= width 
+            bbox[1] /= height
+            bbox[3] /= height
+        return tuple(bbox)
+
+    def get_transform_init_args_names(self):
+        """
+        Fetches the parameter(s) of __init__ method
+        :returns: tuple of parameter(s) of __init__ method
+        """
+        return ('order', 'always_apply', 'p')
 
 class BoxOrder(DualTransform):
     """
-    Bounding boxes reorder
+    Bounding bbox reorder
     """
     
     def __init__(
@@ -30,42 +66,30 @@ class BoxOrder(DualTransform):
 
         """
         Change box order between (xmin, ymin, xmax, ymax) and (xcenter, ycenter, width, height).
-        :param boxes: (tensor) or {np.array) bounding boxes, sized [N, 4]
-        :param order: (str) ['xyxy2xywh', 'xywh2xyxy', 'xyxy2cxcy', 'cxcy2xyxy']
-        :return: (tensor) converted bounding boxes, size [N, 4]
+        :param bbox: (tensor) or {np.array) bounding bbox, sized [N, 4]
+        :param order: (str) ['xyxy2xywh', 'xywh2xyxy', 'xyxy2cxcywh', 'cxcywh2xyxy']
+        :return: (tensor) converted bounding bbox, size [N, 4]
         """
 
-        assert self.order   in ['xyxy2xywh', 'xywh2xyxy', 'xyxy2cxcy', 'cxcy2xyxy', 'yxyx2xyxy', 'xyxy2yxyx']
-
-        # Convert 1-d to a 2-d tensor of boxes, which first dim is 1
-        if isinstance(boxes, torch.Tensor):
-            if len(boxes.shape) == 1:
-                boxes = boxes.unsqueeze(0)
-
-            if self.order   == 'xyxy2xywh':
-                return torch.cat([boxes[:, :2], boxes[:, 2:] - boxes[:, :2]], 1)
-            elif self.order   ==  'xywh2xyxy':
-                return torch.cat([boxes[:, :2], boxes[:, :2] + boxes[:, 2:]], 1)
-            elif self.order   == 'xyxy2cxcy':
-                return torch.cat([(boxes[:, 2:] + boxes[:, :2]) / 2,  # c_x, c_y
-                                boxes[:, 2:] - boxes[:, :2]], 1)  # w, h
-            elif self.order   == 'cxcy2xyxy':
-                return torch.cat([boxes[:, :2] - (boxes[:, 2:] *1.0 / 2),  # x_min, y_min
-                                boxes[:, :2] + (boxes[:, 2:] *1.0 / 2)], 1)  # x_max, y_max
-            elif self.order   == 'xyxy2yxyx' or order == 'yxyx2xyxy':
-                return boxes[:,[1,0,3,2]]
-            
-        else:
-            # Numpy
-            new_boxes = boxes.copy()
-            if self.order == 'xywh2xyxy':
-                new_boxes[:,2] = boxes[:,0] + boxes[:,2]
-                new_boxes[:,3] = boxes[:,1] + boxes[:,3]
-                return new_boxes
-            elif self.order == 'xyxy2xywh':
-                new_boxes[:,2] = boxes[:,2] - boxes[:,0]
-                new_boxes[:,3] = boxes[:,3] - boxes[:,1]
-                return new_boxes
+        assert self.order   in ['xyxy2xywh', 'xywh2xyxy', 'xyxy2cxcywh', 'cxcywh2xyxy', 'xywh2cxcywh', 'cxcywh2xywh']
+        if self.order == 'xywh2xyxy':
+            new_bbox = (bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3])
+        elif self.order == 'xyxy2xywh':
+            new_bbox = (bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
+        elif self.order == 'xyxy2cxcywh':
+            new_bbox = (
+                (bbox[0] + bbox[2]) / 2, 
+                (bbox[1] + bbox[3]) / 2,
+                (bbox[2] - bbox[0]), 
+                (bbox[3] - bbox[1])
+            )
+        elif self.order == 'xywh2cxcywh':
+            new_bbox = (
+                bbox[0] + (bbox[2] / 2), 
+                bbox[1] + (bbox[3] / 2),
+                bbox[2], bbox[3]
+            )
+        return new_bbox
 
     def get_transform_init_args_names(self):
         """

@@ -43,8 +43,6 @@ class DetectionDataset(torch.utils.data.Dataset):
 
         labels = torch.LongTensor(labels) # starts from 1
         boxes = torch.as_tensor(boxes, dtype=torch.float32) 
-        boxes[:, [0, 2]] /= image.shape[1]
-        boxes[:, [1, 3]] /= image.shape[2]
 
         target = {}
         target['boxes'] = boxes
