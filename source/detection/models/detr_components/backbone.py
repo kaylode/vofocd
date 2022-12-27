@@ -24,19 +24,16 @@ class BackboneBase(nn.Module):
         for name, parameter in backbone.named_parameters():
             if not train_backbone or 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
                 parameter.requires_grad_(False)
-        # if return_interm_layers:
-        #     return_layers = {"layer1": "0", "layer2": "1", "layer3": "2", "layer4": "3"}
-        # else:
-        #     return_layers = {'layer4': "0"}
-        if return_interm_layers:
-            return_layers = {"stages": "0", "stages": "1", "stages": "2", "stages": "3"}
-        else:
-            return_layers = {'stages': "3"}
-        self.body = IntermediateLayerGetter(backbone, return_layers=return_layers)
+        self.body = backbone
+        self.return_interm_layers = return_interm_layers
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
-        xs = self.body(tensor_list.tensors)
+        inter_features, _ = self.body.forward_features(tensor_list.tensors)
+        xs = {
+            str(k):v for k,v in enumerate(inter_features)
+        }
+  
         out: Dict[str, NestedTensor] = {}
         for name, x in xs.items():
             m = tensor_list.mask
@@ -52,7 +49,7 @@ class Backbone_ConvNext(BackboneBase):
                  return_interm_layers: bool,
                  dilation: bool):
 
-        backbone = timm.create_model("convnext_base")
+        backbone = model_factory[name]()
         num_channels = 1024
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 

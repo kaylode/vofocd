@@ -39,6 +39,6 @@ class DETRLosses(nn.Module):
 
         loss_dict = self.criterion(pred, target)
         losses = sum(loss_dict[k] * self.weight_dict[k] for k in loss_dict.keys() if k in self.weight_dict)
-        
+        loss_dict = {k:v.item() for k,v in loss_dict.items()}
         loss_dict.update({"T": losses.item()})
         return losses, loss_dict
