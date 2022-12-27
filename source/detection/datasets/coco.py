@@ -119,7 +119,7 @@ class COCODataset(DetectionDataset):
         ori_sizes = [s['ori_size'] for s in batch]
 
         return {
-            'imgs': imgs, 
+            'inputs': imgs, 
             'targets': targets, 
             'img_ids': img_ids,
             'img_names': img_names,
