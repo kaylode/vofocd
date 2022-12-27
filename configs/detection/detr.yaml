@@ -5,7 +5,7 @@ global:
   cfg_transform: ./configs/detection/transform.yaml
   save_dir: /runs
   device: cuda:0
-  pretrained: null
+  pretrained: https://dl.fbaipublicfiles.com/detr/detr-r101-dc5-a2e86def.pth
   resume: null
 trainer:
   name: SupervisedTrainer
