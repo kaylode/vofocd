@@ -1,4 +1,4 @@
-from typing impoty List, Dict
+from typing import List, Dict
 import os
 import numpy as np
 import pandas as pd
@@ -7,7 +7,7 @@ from tabulate import tabulate
 from theseus.base.metrics.metric_template import Metric
 from .misc import MatchingPairs, BoxWithLabel
 
-class PrecisionRecall(Metric):
+class DetectionPrecisionRecall(Metric):
     def __init__(self, num_classes, min_conf=0.2, min_iou=0.5, eps=1e-6, **kwargs):
         self.eps = eps
         self.min_iou = min_iou

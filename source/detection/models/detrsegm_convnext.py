@@ -91,7 +91,7 @@ class DETRSegmConvnext(nn.Module):
     def postprocess(self, outputs: Dict, batch: Dict):
 
         boxes = self.postprocessor_box(
-            outputs = outputs['outputs']
+            outputs = outputs['outputs'],
             target_sizes=batch['img_sizes']
         )
 

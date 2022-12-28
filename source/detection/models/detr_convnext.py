@@ -85,7 +85,7 @@ class DETRConvnext(nn.Module):
 
     def postprocess(self, outputs: Dict, batch: Dict):
         results = self.postprocessor(
-            outputs = outputs['outputs']
+            outputs = outputs['outputs'],
             target_sizes=batch['img_sizes']
         )
 

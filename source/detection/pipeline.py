@@ -1,5 +1,5 @@
 import torch 
-from source.detection.models import MODEL_REGISTRY
+from source.detection.models import MODEL_REGISTRY, ModelWithLossandPostprocess
 from source.detection.losses import LOSS_REGISTRY
 from source.detection.datasets import DATASET_REGISTRY
 from source.detection.augmentations import TRANSFORM_REGISTRY
@@ -37,6 +37,14 @@ class Pipeline(BasePipeline):
             classnames=CLASSNAMES)
         model = move_to(model, self.device)
         return model
+
+    def init_model_with_loss(self):
+        model = self.init_model()
+        criterion = self.init_criterion()
+        self.model = ModelWithLossandPostprocess(model, criterion, self.device)
+        self.logger.text(f"Number of trainable parameters: {self.model.trainable_parameters():,}", level=LoggerObserver.INFO)
+        device_info = get_devices_info(self.device_name)
+        self.logger.text("Using " + device_info, level=LoggerObserver.INFO)
 
     def init_criterion(self):
         CLASSNAMES = self.val_dataset.classnames
