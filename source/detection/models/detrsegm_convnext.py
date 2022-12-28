@@ -62,7 +62,8 @@ class DETRSegmConvnext(nn.Module):
             return_intermediate_dec=True,
         )
 
-        self.postprocessor = PostProcessSegm()
+        self.postprocessor_box = PostProcess()
+        self.postprocessor_mask = PostProcessSegm()
         
         detr_model = DETR(
             backbone,
@@ -88,9 +89,17 @@ class DETRSegmConvnext(nn.Module):
         }
 
     def postprocess(self, outputs: Dict, batch: Dict):
-        results = self.postprocessor(
+
+        boxes = self.postprocessor_box(
             outputs = outputs['outputs']
             target_sizes=batch['img_sizes']
         )
 
-        return results
+        masks = self.postprocessor(
+            results = boxes,
+            outputs = outputs['outputs'],
+            orig_target_sizes=batch['img_sizes'],
+            max_target_sizes=batch['target_sizes']
+        )
+
+        return masks
