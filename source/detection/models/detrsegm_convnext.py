@@ -8,8 +8,9 @@ from theseus.base.utilities.logits import logits2labels
 from .detr_components.transformer import Transformer
 from .detr_components.backbone import build_backbone
 from .detr_components.detr import DETR, PostProcess
+from .detr_components.detr_segm import DETRsegm, PostProcessSegm
 
-class DETRConvnext(nn.Module):
+class DETRSegmConvnext(nn.Module):
     """Convolution models from timm
     
     name: `str`
@@ -30,6 +31,7 @@ class DETRConvnext(nn.Module):
         num_queries: int = 100,
         classnames: Optional[List] = None,
         freeze: bool = False,
+        freeze_detr: bool = False,
         **kwargs
     ):
         super().__init__()
@@ -60,15 +62,17 @@ class DETRConvnext(nn.Module):
             return_intermediate_dec=True,
         )
 
-        self.postprocessor = PostProcess()
+        self.postprocessor = PostProcessSegm()
         
-        self.model = DETR(
+        detr_model = DETR(
             backbone,
             transformer,
             num_classes=num_classes,
             num_queries=num_queries,
             aux_loss=False
         )
+
+        self.model = DETRsegm(detr_model, freeze_detr=freeze_detr)
 
     def get_model(self):
         """
@@ -89,7 +93,4 @@ class DETRConvnext(nn.Module):
             target_sizes=batch['img_sizes']
         )
 
-
         return results
-
-  

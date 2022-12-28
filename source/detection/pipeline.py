@@ -3,6 +3,7 @@ from source.detection.models import MODEL_REGISTRY
 from source.detection.losses import LOSS_REGISTRY
 from source.detection.datasets import DATASET_REGISTRY
 from source.detection.augmentations import TRANSFORM_REGISTRY
+from source.detection.metrics import METRIC_REGISTRY
 from theseus.cv.classification.pipeline import BasePipeline
 from theseus.base.utilities.getter import (get_instance, get_instance_recursively)
 from theseus.base.utilities.cuda import move_to
@@ -25,6 +26,7 @@ class Pipeline(BasePipeline):
         self.dataset_registry = DATASET_REGISTRY
         self.loss_registry = LOSS_REGISTRY
         self.transform_registry = TRANSFORM_REGISTRY
+        self.metric_registry = METRIC_REGISTRY
 
     def init_model(self):
         CLASSNAMES = self.val_dataset.classnames
@@ -61,7 +63,7 @@ class Pipeline(BasePipeline):
             if self.pretrained.startswith('https'):
                 self.pretrained = download_from_url(self.pretrained)
             state_dict = torch.load(self.pretrained, map_location='cpu')
-            self.model.model.model = load_state_dict(self.model.model.model, state_dict)
+            self.model.model.model = load_state_dict(self.model.model.model, state_dict, strict=False)
 
         if self.resume:
             state_dict = torch.load(self.resume, map_location='cpu')

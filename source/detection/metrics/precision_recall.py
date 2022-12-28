@@ -19,9 +19,12 @@ class PrecisionRecall(Metric):
         self.all_pred_instances = []
 
     def update(self, output, batch):
-        img_sizes = output['img_sizes']
+        img_sizes = batch['img_sizes']
         output = output["outputs"] 
         target = batch["targets"] 
+
+        orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
+        results = postprocessors['bbox'](outputs, orig_target_sizes)
 
         # width, height = img.width, img.height
         # class_id = int(item[0])

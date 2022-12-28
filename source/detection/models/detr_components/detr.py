@@ -8,15 +8,8 @@ from torch import nn
 
 from source.detection.models.detr_utils import box_ops
 from source.detection.models.detr_utils.misc import (
-    NestedTensor, nested_tensor_from_tensor_list,
-    accuracy, get_world_size, interpolate,
-    is_dist_avail_and_initialized
+    NestedTensor, nested_tensor_from_tensor_list
 )
-
-from .backbone import build_backbone
-from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
-                           dice_loss, sigmoid_focal_loss)
-
 
 class DETR(nn.Module):
     """ This is the DETR module that performs object detection """
