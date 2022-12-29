@@ -66,7 +66,7 @@ class COCODataset(DetectionDataset):
         image /= 255.0
         return image, image_info['file_name'], width, height
 
-    def load_annotations(self, image_index):
+    def load_annotations(self, image_index, width, height):
         # get ground truth annotations
         annotations_ids = self.fns.getAnnIds(
             imgIds=self.image_ids[image_index], 
@@ -91,8 +91,18 @@ class COCODataset(DetectionDataset):
                 continue
 
             annotation = np.zeros((1, 5))
-            annotation[0, :4] = a['bbox'] # xywh
+
+            box = a['bbox']
+            box[2] += box[0]
+            box[3] += box[1]
+            box[0] = np.clip(box[0], 0, width)
+            box[1] = np.clip(box[1], 0, height)
+            box[2] = np.clip(box[2], 0, width)
+            box[3] = np.clip(box[3], 0, height)
+
+            annotation[0, :4] = [box[0], box[1], box[2]-box[0], box[3]-box[1]]
             annotation[0, 4] = self.idx_mapping[a['category_id']]
+            
             annotations = np.append(annotations, annotation, axis=0)
 
         return annotations

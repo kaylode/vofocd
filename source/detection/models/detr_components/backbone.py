@@ -10,7 +10,7 @@ import torchvision
 from torch import nn
 from torchvision.models._utils import IntermediateLayerGetter
 from typing import Dict, List
-from source.detection.models.detr_utils.misc import NestedTensor, is_main_process
+from source.detection.models.detr_utils.misc import NestedTensor
 from .position_encoding import build_position_encoding
 import timm
 
@@ -82,7 +82,7 @@ class BackboneBase(nn.Module):
         super().__init__()
         backbone = getattr(torchvision.models, backbone_name)(
             replace_stride_with_dilation=[False, False, dilation],
-            pretrained=is_main_process(), norm_layer=FrozenBatchNorm2d)
+            weights='ResNet50_Weights.DEFAULT', norm_layer=FrozenBatchNorm2d)
         self.num_channels = 512 if backbone_name in ('resnet18', 'resnet34') else 2048
         for name, parameter in backbone.named_parameters():
             if not train_backbone or 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
