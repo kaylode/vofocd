@@ -89,7 +89,13 @@ class DETRConvnext(nn.Module):
             target_sizes=batch['img_sizes']
         )
 
+        denormalized_targets = batch['targets']
+        denormalized_targets = self.postprocessor(
+            outputs = denormalized_targets,
+            target_sizes=batch['img_sizes']
+        )
 
-        return results
+        batch['targets'] = denormalized_targets
+        return results, batch
 
   

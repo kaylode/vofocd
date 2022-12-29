@@ -21,12 +21,12 @@ class ModelWithLossandPostprocess(ModelWithLoss):
         loss, loss_dict = self.criterion(outputs, batch, self.device)
 
         if metrics is not None:
-            processed_outputs = self.model.postprocess(outputs=outputs, batch=batch)
+            outputs = self.model.postprocess(outputs=outputs, batch=batch)
             for metric in metrics:
-                metric.update(processed_outputs, batch)
+                metric.update(outputs, batch)
 
         return {
             'loss': loss,
             'loss_dict': loss_dict,
-            'model_outputs': processed_outputs
+            'model_outputs': outputs
         }

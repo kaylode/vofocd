@@ -6,9 +6,11 @@ from source.detection.augmentations import TRANSFORM_REGISTRY
 from source.detection.metrics import METRIC_REGISTRY
 from theseus.cv.classification.pipeline import BasePipeline
 from theseus.base.utilities.getter import (get_instance, get_instance_recursively)
-from theseus.base.utilities.cuda import move_to
+from theseus.base.utilities.cuda import move_to, get_devices_info
 from theseus.base.utilities.loading import load_state_dict
 from theseus.base.utilities.download import download_from_url
+
+from theseus.base.utilities.loggers import LoggerObserver
 
 class Pipeline(BasePipeline):
     """docstring for Pipeline."""

@@ -87,23 +87,31 @@ class PostProcess(nn.Module):
                           For evaluation, this must be the original image size (before any data augmentation)
                           For visualization, this should be the image size after data augment, but before padding
         """
-        out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
 
-        assert len(out_logits) == len(target_sizes)
-        assert target_sizes.shape[1] == 2
+        if isinstance(outputs, dict) and 'pred_logits' in outputs.keys():
+            logits, boxes = outputs['pred_logits'], outputs['pred_boxes']
+            print(logits.shape)
 
-        prob = F.softmax(out_logits, -1)
-        scores, labels = prob[..., :-1].max(-1)
+            assert len(logits) == len(target_sizes)
+            assert target_sizes.shape[1] == 2
 
-        # convert to [x0, y0, x1, y1] format
-        boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
-        # and from relative [0, 1] to absolute [0, height] coordinates
-        img_h, img_w = target_sizes.unbind(1)
-        scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-        boxes = boxes * scale_fct[:, None, :]
-
-        results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
-
+            prob = F.softmax(logits, -1)
+            scores, labels = prob[..., :-1].max(-1)
+            # convert to [x0, y0, x1, y1] format
+            boxes = box_ops.box_cxcywh_to_xyxy(boxes)
+            # and from relative [0, 1] to absolute [0, height] coordinates
+            img_h, img_w = target_sizes.unbind(1)
+            scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1).to(boxes.device)
+            boxes = boxes * scale_fct[:, None, :]
+            results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
+        else:
+            labels = [i['labels'] for i in outputs]
+            boxes = [i['boxes'] for i in outputs]
+            img_h, img_w = target_sizes.unbind(1)
+            scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+            new_boxes = [i*scale for i, scale in zip(boxes, scale_fct)]
+            results = [{'labels': l, 'boxes': b} for l, b in zip(labels, new_boxes)]
+            
         return results
 
 

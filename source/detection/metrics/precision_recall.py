@@ -17,44 +17,42 @@ class DetectionPrecisionRecall(Metric):
     def reset(self):
         self.all_gt_instances = []
         self.all_pred_instances = []
+        self.idx = 0
 
     def update(self, output, batch):
         img_sizes = batch['img_sizes']
         ori_sizes = batch['ori_sizes']
-        output = output["outputs"] 
         target = batch["targets"] 
 
-        print(img_sizes)
-        print(output)
-        print(target)
-        asd
+        for pred, gt in zip(output, target):
+            pred_boxes = pred['boxes'].cpu().numpy().tolist()
+            pred_clss = pred['labels'].cpu().numpy().tolist()
+            pred_scores = pred['scores'].cpu().numpy().tolist()
 
-        # width, height = img.width, img.height
-        # class_id = int(item[0])
-        # if return_scores:
-        #     score = float(item[-1])
-        #     scores.append(score)
-        # w = float(item[3]) * width
-        # h = float(item[4]) * height
-        # xmin = float(item[1]) * width - w/2
-        # ymin = float(item[2]) * height - h/2
-        # xmax = xmin + w
-        # ymax = ymin + h
-        # boxes.append([xmin, ymin, xmax, ymax])
-        # labels.append(class_id)
+            gt_boxes = gt['boxes'].numpy().tolist()
+            gt_clss = gt['labels'].numpy().tolist()
 
-        gt_instances = [BoxWithLabel(gt_id, box, int(text), 1.0) for box, text in zip(gt_boxes, gt_labels)]
-        pred_instances = [BoxWithLabel(gt_id, box, int(text), score) for (box, text, score) in zip(pred_boxes, pred_labels, pred_scores)]
+            gt_instances = [
+                BoxWithLabel(self.idx, box, int(cls), 1.0) 
+                for box, cls in zip(gt_boxes, gt_clss)
+            ]
+            pred_instances = [
+                BoxWithLabel(self.idx, box, int(cls), scr) 
+                for (box, cls, scr) in zip(pred_boxes, pred_clss, pred_scores)
+            ]
+            self.idx+=1
 
-        all_gt_instances.append(gt_instances)
-        all_pred_instances.append(pred_instances)
+            self.all_gt_instances.append(gt_instances)
+            self.all_pred_instances.append(pred_instances)
 
     def value(self):
         total_tp, total_fp, total_fn = self.calculate_cfm(
             self.all_pred_instances, 
             self.all_gt_instances
         )
-        score = calculate_pr(total_tp, total_fp, total_fn)
+        score = self.calculate_pr(total_tp, total_fp, total_fn)
+        print(score)
+        asd
         return score
 
     def calculate_cfm(self, pred_boxes: List[BoxWithLabel], gt_boxes: List[BoxWithLabel]):
@@ -78,15 +76,15 @@ class DetectionPrecisionRecall(Metric):
 
     def calculate_pr(self, total_tp, total_fp, total_fn):
         tp_per_class = {
-            i: 0 for i in range(len(num_classes))
+            i: 0 for i in range(self.num_classes)
         }
 
         fp_per_class = {
-            i: 0 for i in range(len(num_classes))
+            i: 0 for i in range(self.num_classes)
         }
 
         fn_per_class = {
-            i: 0 for i in range(len(num_classes))
+            i: 0 for i in range(self.num_classes)
         }
 
         for box, _, _ in total_tp:
@@ -103,8 +101,7 @@ class DetectionPrecisionRecall(Metric):
 
         precisions = []
         recalls = []
-        num_classes = len(num_classes)
-        for cls_id in range(num_classes):
+        for cls_id in range(self.num_classes):
 
             if tp_per_class[cls_id] + fp_per_class[cls_id] == 0:
                 precisions.append(-1)
@@ -123,21 +120,8 @@ class DetectionPrecisionRecall(Metric):
         np_precisions = np.array(precisions)
         np_recalls = np.array(recalls)
 
-        precision_all = sum(np_precisions[np_precisions!=-1]) / (num_classes - sum(np_precisions==-1))
-        recall_all = sum(np_recalls[np_recalls!=-1]) / (num_classes - sum(np_recalls==-1))
+        precision_all = sum(np_precisions[np_precisions!=-1]) / (self.num_classes - sum(np_precisions==-1))
+        recall_all = sum(np_recalls[np_recalls!=-1]) / (self.num_classes - sum(np_recalls==-1))
 
-        recalls.insert(0, recall_all)
-        precisions.insert(0, precision_all)
-        num_classes.insert(0, 'All')
-
-        val_summary = {
-            "Object name": num_classes,
-            "Precision": precisions,
-            "Recall": recalls
-        }
+        return {f"precision": precision_all, f"recall": recall_all}
         
-        table = tabulate(
-            val_summary, headers="keys", tablefmt="fancy_grid"
-        )
-
-        pd.DataFrame(val_summary).to_csv(os.path.join(OUTDIR, 'val_summary.csv'), index=False)
