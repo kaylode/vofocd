@@ -51,8 +51,6 @@ class DetectionPrecisionRecall(Metric):
             self.all_gt_instances
         )
         score = self.calculate_pr(total_tp, total_fp, total_fn)
-        print(score)
-        asd
         return score
 
     def calculate_cfm(self, pred_boxes: List[BoxWithLabel], gt_boxes: List[BoxWithLabel]):
