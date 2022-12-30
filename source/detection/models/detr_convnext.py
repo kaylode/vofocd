@@ -98,4 +98,44 @@ class DETRConvnext(nn.Module):
         batch['targets'] = denormalized_targets
         return results, batch
 
+    def get_prediction(self, adict: Dict[str, Any], device: torch.device):
+        """
+        Inference using the model.
+        adict: `Dict[str, Any]`
+            dictionary of inputs
+        device: `torch.device`
+            current device 
+        """
+        outputs = self.forward(adict, device)
+
+        batch_size = outputs['outputs']['pred_logits'].shape[0]
+        target_sizes = torch.Tensor([adict['img_sizes']]).repeat(batch_size, 1)
+        results = self.postprocessor(
+            outputs = outputs['outputs'],
+            target_sizes=target_sizes
+        )
+        
+        scores = []
+        bboxes = []
+        classids = []
+        classnames = []
+        for result in results:
+            score = move_to(detach(result['scores']), torch.device('cpu')).numpy().tolist()
+            boxes = move_to(detach(result['boxes']), torch.device('cpu')).numpy().tolist()
+            classid = move_to(detach(result['labels']), torch.device('cpu')).numpy().tolist()
+            scores.append(score)
+            bboxes.append(boxes)
+            classids.append(classid)
+            if self.classnames:
+                classname = [self.classnames[int(clsid)] for clsid in classid]
+                classnames.append(classname)
+
+        return {
+            'boxes': boxes,
+            'labels': classids,
+            'confidences': scores, 
+            'names': classnames,
+        }
+
+
   

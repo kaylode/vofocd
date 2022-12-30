@@ -13,6 +13,24 @@ from theseus.base.utilities.cuda import move_to
 
 LOGGER = LoggerObserver.getLogger("main")
 
+
+def denormalize_bboxes(self, boxes, order, image_shape=None) -> np.ndarray:
+    """
+    Denormalize bboxes and return
+    image: `torch.Tensor` or `np.ndarray`
+        image to be denormalized
+    """
+    if image_shape is not None:
+        boxes[:, [0,2]] *= image_shape[1]
+        boxes[:, [1,3]] *= image_shape[0]
+
+    from source.detection.augmentations.bbox_transforms import BoxOrder
+    denom = BoxOrder(order)
+    new_boxes = denom.apply_to_bboxes(boxes)
+    new_boxes = np.stack([torch.stack(i, dim=0).numpy() for i in new_boxes])
+    return new_boxes.astype(int)
+
+
 class DetectionVisualizerCallbacks(Callbacks):
     """
     Callbacks for visualizing stuff during training
@@ -40,10 +58,9 @@ class DetectionVisualizerCallbacks(Callbacks):
         valset = valloader.dataset
         classnames = valset.classnames
 
-        self.visualize_model(model, train_batch)
+        self.visualizer.set_classnames(classnames)
         self.params['trainer'].evaluate_epoch()
         self.visualize_gt(train_batch, val_batch, iters, classnames)
-        self.analyze_gt(trainset, valset, iters)
 
     def visualize_gt(self, train_batch, val_batch, iters, classnames):
         """
@@ -52,15 +69,27 @@ class DetectionVisualizerCallbacks(Callbacks):
 
         LOGGER.text("Visualizing dataset...", level=LoggerObserver.DEBUG)
         images = train_batch["inputs"]
-        bboxes = train_batch['targets']
+        anns = train_batch['targets']
 
         batch = []
-        for idx, (inputs, mask) in enumerate(zip(images, bboxes)):
+        for idx, (inputs, ann) in enumerate(zip(images, anns)):
+            boxes = ann['boxes']
+            labels = ann['labels'].numpy()
             img_show = self.visualizer.denormalize(inputs)
-            decode_mask = self.visualizer.decode_segmap(mask.numpy())
+            decode_boxes = denormalize_bboxes(
+                self.visualizer,
+                boxes, order='cxcywh2xyxy',
+                image_shape=img_show.shape[:2]
+            )
+
+            self.visualizer.set_image(img_show.copy())
+            self.visualizer.draw_bbox(
+                decode_boxes, 
+                labels=labels,
+                scores = [1.0 for _ in range(len(labels))]
+            )
+            img_show = self.visualizer.get_image()
             img_show = TFF.to_tensor(img_show)
-            decode_mask = TFF.to_tensor(decode_mask/255.0)
-            img_show = torch.cat([img_show, decode_mask], dim=-1)
             batch.append(img_show)
         grid_img = self.visualizer.make_grid(batch)
 
@@ -69,7 +98,7 @@ class DetectionVisualizerCallbacks(Callbacks):
         plt.imshow(grid_img)
 
         # segmentation color legends 
-        patches = [mpatches.Patch(color=np.array(color_list[i][::-1]), 
+        patches = [mpatches.Patch(color=np.array(color_list[i]), 
                                 label=classnames[i]) for i in range(len(classnames))]
         plt.legend(handles=patches, bbox_to_anchor=(-0.03, 1), loc="upper right", borderaxespad=0., 
                 fontsize='large', ncol=(len(classnames)//10)+1)
@@ -86,15 +115,27 @@ class DetectionVisualizerCallbacks(Callbacks):
 
         # Validation
         images = val_batch["inputs"]
-        masks = val_batch['targets'].squeeze()
+        anns = val_batch['targets']
 
         batch = []
-        for idx, (inputs, mask) in enumerate(zip(images, masks)):
+        for idx, (inputs, ann) in enumerate(zip(images, anns)):
+            boxes = ann['boxes']
+            labels = ann['labels'].numpy()
             img_show = self.visualizer.denormalize(inputs)
-            decode_mask = self.visualizer.decode_segmap(mask.numpy())
+            decode_boxes = denormalize_bboxes(
+                self.visualizer,
+                boxes, order='cxcywh2xyxy',
+                image_shape=img_show.shape[:2]
+            )
+
+            self.visualizer.set_image(img_show.copy())
+            self.visualizer.draw_bbox(
+                decode_boxes, 
+                labels=labels,
+                scores = [1.0 for _ in range(len(labels))]
+            )
+            img_show = self.visualizer.get_image()
             img_show = TFF.to_tensor(img_show)
-            decode_mask = TFF.to_tensor(decode_mask/255.0)
-            img_show = torch.cat([img_show, decode_mask], dim=-1)
             batch.append(img_show)
         grid_img = self.visualizer.make_grid(batch)
 
@@ -135,20 +176,42 @@ class DetectionVisualizerCallbacks(Callbacks):
         model.eval()
 
         images = last_batch["inputs"]
-        masks = last_batch['targets'].squeeze()
+        targets = last_batch['targets']
 
         preds = model.model.get_prediction(
-            {'inputs': images}, model.device)['masks']
-
+            {'inputs': images, 'img_sizes': images.shape[-2:]}, model.device)
+        
+        preds = [i for i in zip(preds['boxes'], preds['confidences'], preds['names'])]
         batch = []
-        for idx, (inputs, mask, pred) in enumerate(zip(images, masks, preds)):
+        for idx, (inputs, target, pred) in enumerate(zip(images, targets, preds)):
             img_show = self.visualizer.denormalize(inputs)
-            decode_mask = self.visualizer.decode_segmap(mask.numpy())
-            decode_pred = self.visualizer.decode_segmap(pred)
-            img_cam = TFF.to_tensor(img_show)
-            decode_mask = TFF.to_tensor(decode_mask/255.0)
+
+            # Ground truth
+            boxes = target['boxes']
+            labels = target['labels'].numpy()
+            img_show = self.visualizer.denormalize(inputs)
+            self.visualizer.set_image(img_show.copy())
+            self.visualizer.draw_bbox(
+                boxes, 
+                labels=labels
+            )
+            img_show = self.visualizer.get_image()
+            img_show = TFF.to_tensor(img_show/255.0)
+
+            # Prediction
+            boxes, labels, scores = preds
+            decode_pred = self.visualizer.denormalize(inputs)
+            self.visualizer.set_image(decode_pred.copy())
+            self.visualizer.draw_bbox(
+                boxes, 
+                labels=labels,
+                scores=scores
+            )
+            decode_pred = self.visualizer.get_image()
             decode_pred = TFF.to_tensor(decode_pred/255.0)
-            img_show = torch.cat([img_cam, decode_pred, decode_mask], dim=-1)
+
+            decode_pred = TFF.to_tensor(decode_pred/255.0)
+            img_show = torch.cat([img_show, decode_pred], dim=-1)
             batch.append(img_show)
         grid_img = self.visualizer.make_grid(batch)
 
@@ -157,7 +220,7 @@ class DetectionVisualizerCallbacks(Callbacks):
         plt.title('Raw image - Prediction - Ground Truth')
         plt.imshow(grid_img)
 
-        # segmentation color legends 
+        # color legends 
         classnames = valloader.dataset.classnames
         patches = [mpatches.Patch(color=np.array(color_list[i][::-1]), 
                                 label=classnames[i]) for i in range(len(classnames))]
@@ -177,33 +240,3 @@ class DetectionVisualizerCallbacks(Callbacks):
         plt.cla()   # Clear axis
         plt.clf()   # Clear figure
         plt.close()
-
-
-    def visualize(image_dir, vboxes, out_dir, save_separate_classes= False):
-        from theseus.base.utilities.visualization.visualizer import Visualizer
-
-        os.makedirs(out_dir, exist_ok=True)
-
-        visualizer = Visualizer()
-        visualizer.set_classnames(LABELS)
-        image_ids = set([box.name for box in vboxes])
-        for image_id in image_ids:
-            instances = [box for box in vboxes if box.name == image_id]
-            boxes = [i.get_box() for i in instances]
-            labels = [i.get_label() for i in instances]
-            scores = [i.get_score() for i in instances]
-
-            image_path = os.path.join(image_dir, image_id+'.jpg')
-            img = cv2.imread(image_path)
-            visualizer.set_image(img)
-
-            visualizer.draw_bbox(boxes, labels, scores)
-
-            if save_separate_classes:
-                for label in labels:
-                    label_name = LABELS[label]
-                    out_label_dir = os.path.join(out_dir, label_name)
-                    os.makedirs(out_label_dir, exist_ok=True)
-                    visualizer.save_image(os.path.join(out_label_dir, f'{image_id}.jpg'))
-            else:
-                visualizer.save_image(os.path.join(out_dir, f'{image_id}.jpg'))

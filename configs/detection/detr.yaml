@@ -18,6 +18,10 @@ trainer:
     use_fp16: true
 callbacks:
   - name: LoggerCallbacks
+  - name: WandbCallbacks
+    args:
+      username: kaylode
+      project_name: isbi-detection 
   - name: DetectionVisualizerCallbacks
 model:
   name: DETRConvnext

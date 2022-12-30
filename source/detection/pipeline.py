@@ -4,6 +4,7 @@ from source.detection.losses import LOSS_REGISTRY
 from source.detection.datasets import DATASET_REGISTRY
 from source.detection.augmentations import TRANSFORM_REGISTRY
 from source.detection.metrics import METRIC_REGISTRY
+from source.detection.callbacks import CALLBACKS_REGISTRY
 from theseus.cv.classification.pipeline import BasePipeline
 from theseus.base.utilities.getter import (get_instance, get_instance_recursively)
 from theseus.base.utilities.cuda import move_to, get_devices_info
@@ -29,6 +30,7 @@ class Pipeline(BasePipeline):
         self.loss_registry = LOSS_REGISTRY
         self.transform_registry = TRANSFORM_REGISTRY
         self.metric_registry = METRIC_REGISTRY
+        self.callbacks_registry = CALLBACKS_REGISTRY
 
     def init_model(self):
         CLASSNAMES = self.val_dataset.classnames

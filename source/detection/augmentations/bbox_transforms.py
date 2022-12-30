@@ -89,6 +89,19 @@ class BoxOrder(DualTransform):
                 bbox[1] + (bbox[3] / 2),
                 bbox[2], bbox[3]
             )
+        elif self.order == 'cxcywh2xyxy':
+            new_bbox = (
+                bbox[0] - (bbox[2] / 2), 
+                bbox[1] - (bbox[3] / 2),
+                bbox[0] + (bbox[2] / 2), 
+                bbox[1] + (bbox[3] / 2), 
+            )
+        elif self.order == 'cxcywh2xywh':
+            new_bbox = (
+                bbox[0] - (bbox[2] / 2), 
+                bbox[1] - (bbox[3] / 2),
+                bbox[2], bbox[3]
+            )
         return new_bbox
 
     def get_transform_init_args_names(self):

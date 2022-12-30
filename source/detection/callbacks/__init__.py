@@ -1,4 +1,4 @@
 from .visualization import DetectionVisualizerCallbacks
-from theseus.cv.classification.callbacks import CALLBACK_REGISTRY
+from theseus.cv.classification.callbacks import CALLBACKS_REGISTRY
 
-CALLBACK_REGISTRY.register(DetectionVisualizerCallbacks)
+CALLBACKS_REGISTRY.register(DetectionVisualizerCallbacks)
