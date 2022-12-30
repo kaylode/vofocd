@@ -18,7 +18,7 @@ trainer:
     use_fp16: true
 callbacks:
   - name: LoggerCallbacks
-    args: null
+  - name: DetectionVisualizerCallbacks
 model:
   name: DETRConvnext
   args:
