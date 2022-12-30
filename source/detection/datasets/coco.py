@@ -95,10 +95,10 @@ class COCODataset(DetectionDataset):
             box = a['bbox']
             box[2] += box[0]
             box[3] += box[1]
-            box[0] = np.clip(box[0], 0, width)
-            box[1] = np.clip(box[1], 0, height)
-            box[2] = np.clip(box[2], 0, width)
-            box[3] = np.clip(box[3], 0, height)
+            box[0] = np.clip(box[0], 0, width-1)
+            box[1] = np.clip(box[1], 0, height-1)
+            box[2] = np.clip(box[2], 0, width-1)
+            box[3] = np.clip(box[3], 0, height-1)
 
             annotation[0, :4] = [box[0], box[1], box[2]-box[0], box[3]-box[1]]
             annotation[0, 4] = self.idx_mapping[a['category_id']]
@@ -113,7 +113,7 @@ class COCODataset(DetectionDataset):
         """
         img, img_name, ori_width, ori_height  = self.load_image(idx)
         img_id = self.image_ids[idx]
-        annot = self.load_annotations(idx)
+        annot = self.load_annotations(idx, ori_width, ori_height)
         box = annot[:, :4]
         label = annot[:, -1]
 
