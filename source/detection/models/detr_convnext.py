@@ -131,7 +131,7 @@ class DETRConvnext(nn.Module):
                 classnames.append(classname)
 
         return {
-            'boxes': boxes,
+            'boxes': bboxes,
             'labels': classids,
             'confidences': scores, 
             'names': classnames,

@@ -181,7 +181,8 @@ class DetectionVisualizerCallbacks(Callbacks):
         preds = model.model.get_prediction(
             {'inputs': images, 'img_sizes': images.shape[-2:]}, model.device)
         
-        preds = [i for i in zip(preds['boxes'], preds['confidences'], preds['names'])]
+        preds = [i for i in zip(preds['boxes'], preds['confidences'], preds['labels'])]
+        
         batch = []
         for idx, (inputs, target, pred) in enumerate(zip(images, targets, preds)):
             img_show = self.visualizer.denormalize(inputs)
@@ -199,7 +200,7 @@ class DetectionVisualizerCallbacks(Callbacks):
             img_show = TFF.to_tensor(img_show/255.0)
 
             # Prediction
-            boxes, labels, scores = preds
+            boxes, scores, labels = pred
             decode_pred = self.visualizer.denormalize(inputs)
             self.visualizer.set_image(decode_pred.copy())
             self.visualizer.draw_bbox(
@@ -209,8 +210,7 @@ class DetectionVisualizerCallbacks(Callbacks):
             )
             decode_pred = self.visualizer.get_image()
             decode_pred = TFF.to_tensor(decode_pred/255.0)
-
-            decode_pred = TFF.to_tensor(decode_pred/255.0)
+            
             img_show = torch.cat([img_show, decode_pred], dim=-1)
             batch.append(img_show)
         grid_img = self.visualizer.make_grid(batch)
