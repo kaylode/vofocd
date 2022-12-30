@@ -85,8 +85,7 @@ class DetectionVisualizerCallbacks(Callbacks):
             self.visualizer.set_image(img_show.copy())
             self.visualizer.draw_bbox(
                 decode_boxes, 
-                labels=labels,
-                scores = [1.0 for _ in range(len(labels))]
+                labels=labels
             )
             img_show = self.visualizer.get_image()
             img_show = TFF.to_tensor(img_show)
@@ -131,8 +130,7 @@ class DetectionVisualizerCallbacks(Callbacks):
             self.visualizer.set_image(img_show.copy())
             self.visualizer.draw_bbox(
                 decode_boxes, 
-                labels=labels,
-                scores = [1.0 for _ in range(len(labels))]
+                labels=labels
             )
             img_show = self.visualizer.get_image()
             img_show = TFF.to_tensor(img_show)
@@ -217,7 +215,7 @@ class DetectionVisualizerCallbacks(Callbacks):
 
         fig = plt.figure(figsize=(16,8))
         plt.axis('off')
-        plt.title('Raw image - Prediction - Ground Truth')
+        plt.title('Raw image - Ground Truth - Prediction')
         plt.imshow(grid_img)
 
         # color legends 

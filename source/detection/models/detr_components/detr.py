@@ -90,7 +90,6 @@ class PostProcess(nn.Module):
 
         if isinstance(outputs, dict) and 'pred_logits' in outputs.keys():
             logits, boxes = outputs['pred_logits'], outputs['pred_boxes']
-            print(logits.shape)
 
             assert len(logits) == len(target_sizes)
             assert target_sizes.shape[1] == 2
@@ -107,11 +106,11 @@ class PostProcess(nn.Module):
         else:
             labels = [i['labels'] for i in outputs]
             boxes = [i['boxes'] for i in outputs]
+            boxes = [box_ops.box_cxcywh_to_xyxy(box) for box in boxes]
             img_h, img_w = target_sizes.unbind(1)
             scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
             new_boxes = [i*scale for i, scale in zip(boxes, scale_fct)]
             results = [{'labels': l, 'boxes': b} for l, b in zip(labels, new_boxes)]
-            
         return results
 
 
