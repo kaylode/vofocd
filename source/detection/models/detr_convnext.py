@@ -97,7 +97,8 @@ class DETRConvnext(nn.Module):
 
         batch['targets'] = denormalized_targets
         return results, batch
-
+    
+    @torch.no_grad()
     def get_prediction(self, adict: Dict[str, Any], device: torch.device):
         """
         Inference using the model.

@@ -20,8 +20,6 @@ class DetectionPrecisionRecall(Metric):
         self.idx = 0
 
     def update(self, output, batch):
-        img_sizes = batch['img_sizes']
-        ori_sizes = batch['ori_sizes']
         target = batch["targets"] 
 
         for pred, gt in zip(output, target):
