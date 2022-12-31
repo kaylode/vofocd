@@ -59,7 +59,7 @@ metrics:
 optimizer:
   name: AdamW
   args:
-    lr: 0.0001
+    lr: 0.0003
     weight_decay: 0.0005
     betas:
       - 0.937
@@ -79,14 +79,11 @@ data:
       args:
         image_dir: /content/data/aihcm20/images
         label_path: /content/data/aihcm20/annotations/annotations_train.json
-        txt_classnames: /content/data/aihcm20/classnames.txt
-
     val:
       name: COCODataset
       args:
         image_dir: /content/data/aihcm20/images
         label_path: /content/data/aihcm20/annotations/annotations_val.json
-        txt_classnames: /content/data/aihcm20/classnames.txt
   dataloader:
     train:
       name: DataLoaderWithCollator

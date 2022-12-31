@@ -75,7 +75,7 @@ class Pipeline(BasePipeline):
             if self.pretrained.startswith('https'):
                 self.pretrained = download_from_url(self.pretrained)
             state_dict = torch.load(self.pretrained, map_location='cpu')
-            self.model.model.model = load_state_dict(self.model.model.model, state_dict, strict=False)
+            self.model.model.model = load_state_dict(self.model.model.model, state_dict, strict=False, key='model')
 
         if self.resume:
             state_dict = torch.load(self.resume, map_location='cpu')
