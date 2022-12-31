@@ -92,7 +92,7 @@ class COCODataset(DetectionDataset):
 
             annotation = np.zeros((1, 5))
 
-            box = a['bbox']
+            box = a['bbox'].copy()
             box[2] += box[0]
             box[3] += box[1]
             box[0] = np.clip(box[0], 0, width-1)
