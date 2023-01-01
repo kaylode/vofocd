@@ -28,6 +28,7 @@ class DETRConvnext(nn.Module):
         backbone_name: str = 'convnext_base',
         num_classes: int = 1000,
         num_queries: int = 100,
+        aux_loss: bool = True,
         classnames: Optional[List] = None,
         freeze: bool = False,
         **kwargs
@@ -67,7 +68,7 @@ class DETRConvnext(nn.Module):
             transformer,
             num_classes=num_classes,
             num_queries=num_queries,
-            aux_loss=False
+            aux_loss=aux_loss
         )
 
     def get_model(self):
