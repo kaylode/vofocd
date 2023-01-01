@@ -28,6 +28,7 @@ class DETRConvnext(nn.Module):
         backbone_name: str = 'convnext_base',
         num_classes: int = 1000,
         num_queries: int = 100,
+        min_conf: float = 0.25,
         aux_loss: bool = True,
         classnames: Optional[List] = None,
         freeze: bool = False,
@@ -61,7 +62,7 @@ class DETRConvnext(nn.Module):
             return_intermediate_dec=True,
         )
 
-        self.postprocessor = PostProcess()
+        self.postprocessor = PostProcess(min_conf=min_conf)
         
         self.model = DETR(
             backbone,

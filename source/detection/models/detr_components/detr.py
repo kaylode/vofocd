@@ -78,6 +78,9 @@ class DETR(nn.Module):
 
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
+    def __init__(self, min_conf=0.25):
+        self.min_conf = min_conf
+
     @torch.no_grad()
     def forward(self, outputs, target_sizes):
         """ Perform the computation
@@ -102,7 +105,14 @@ class PostProcess(nn.Module):
             img_h, img_w = target_sizes.unbind(1)
             scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1).to(boxes.device)
             boxes = boxes * scale_fct[:, None, :]
-            results = [{'scores': s, 'labels': l, 'boxes': b} for s, l, b in zip(scores, labels, boxes)]
+
+            results = []
+            for box, score, label in zip(boxes, scores, labels):
+                keep_idx = score >= self.min_conf
+                keep_score = score[keep_idx]
+                keep_box = box[keep_idx]
+                keep_label = label[keep_idx]
+                results.append({'scores': keep_score, 'labels': keep_label, 'boxes': keep_box})
         else:
             labels = [i['labels'] for i in outputs]
             boxes = [i['boxes'] for i in outputs]
