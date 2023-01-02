@@ -2,10 +2,10 @@ global:
   exp_name: null
   exist_ok: false
   debug: true
-  cfg_transform: ./configs/detection/transform.yaml
+  cfg_transform: ./configs/semantic/transform.yaml
   save_dir: /runs
   device: cuda:0
-  pretrained: /content/data/detr-r50-e632da11.pth
+  pretrained: /content/detr-r50-e632da11.pth
   resume: null
 trainer:
   name: SupervisedTrainer
@@ -19,17 +19,13 @@ trainer:
 callbacks:
   - name: LoggerCallbacks
   - name: CheckpointCallbacks
-    args:
-      best_key: f1_score
   - name: WandbCallbacks
     args:
       username: kaylode
-      project_name: isbi-detection 
-  - name: DetectionVisualizerCallbacks
-    args:
-      order: cxcywh2xyxy
+      project_name: isbi-segmentation 
+  - name: SemanticVisualizerCallbacks
 model:
-  name: DETRConvnext
+  name: DETRSegmConvnext
   args:
     model_name: detr
     backbone_name: resnet50
@@ -58,14 +54,17 @@ loss:
     cost_bbox: 5
     cost_giou: 2
     eos_coef: 0.1
-metrics: 
-  - name: MeanAveragePrecision
-    args: 
-       min_iou: 0.5
+metrics:
+  - name: PixelAccuracy
+    args:
+      ignore_index: 0
+  - name: DiceScore
+    args:
+      ignore_index: 0
 optimizer:
   name: AdamW
   args:
-    lr: 0.00001
+    lr: 0.00005
     weight_decay: 0.0001
 scheduler:
   name: SchedulerWrapper

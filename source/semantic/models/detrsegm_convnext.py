@@ -29,6 +29,7 @@ class DETRSegmConvnext(nn.Module):
         backbone_name: str = 'convnext_base',
         num_classes: int = 1000,
         num_queries: int = 100,
+        aux_loss: bool = True,
         classnames: Optional[List] = None,
         freeze: bool = False,
         freeze_detr: bool = False,
@@ -62,15 +63,15 @@ class DETRSegmConvnext(nn.Module):
             return_intermediate_dec=True,
         )
 
-        self.postprocessor_box = PostProcess()
+        self.postprocessor_box = PostProcess(min_conf=min_conf)
         self.postprocessor_mask = PostProcessSegm()
         
-        detr_model = DETR(
+        self.model = DETR(
             backbone,
             transformer,
             num_classes=num_classes,
             num_queries=num_queries,
-            aux_loss=False
+            aux_loss=aux_loss
         )
 
         self.model = DETRsegm(detr_model, freeze_detr=freeze_detr)
