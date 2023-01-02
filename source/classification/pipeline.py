@@ -3,17 +3,17 @@ import torch
 from theseus.opt import Config
 from theseus.base.pipeline import BasePipeline, BaseTestPipeline
 from theseus.base.optimizers import OPTIM_REGISTRY, SCHEDULER_REGISTRY
-from theseus.classification.augmentations import TRANSFORM_REGISTRY
-from source.losses import LOSS_REGISTRY
-from theseus.classification.datasets import DATASET_REGISTRY, DATALOADER_REGISTRY
-from theseus.classification.trainer import TRAINER_REGISTRY
-from theseus.classification.metrics import METRIC_REGISTRY
-from source.models import MODEL_REGISTRY
-from source.callbacks import CALLBACKS_REGISTRY
-from theseus.utilities.loading import load_state_dict
-from theseus.utilities.loggers import LoggerObserver
-from theseus.utilities.getter import (get_instance, get_instance_recursively)
-from theseus.utilities.cuda import move_to
+from theseus.cv.classification.augmentations import TRANSFORM_REGISTRY
+from source.classification.losses import LOSS_REGISTRY
+from theseus.cv.classification.datasets import DATASET_REGISTRY, DATALOADER_REGISTRY
+from theseus.cv.classification.trainer import TRAINER_REGISTRY
+from theseus.cv.classification.metrics import METRIC_REGISTRY
+from source.classification.models import MODEL_REGISTRY
+from source.classification.callbacks import CALLBACKS_REGISTRY
+from theseus.base.utilities.loading import load_state_dict
+from theseus.base.utilities.loggers import LoggerObserver
+from theseus.base.utilities.getter import (get_instance, get_instance_recursively)
+from theseus.base.utilities.cuda import move_to
 
 
 class Pipeline(BasePipeline):
