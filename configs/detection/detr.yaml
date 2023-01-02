@@ -5,7 +5,7 @@ global:
   cfg_transform: ./configs/detection/transform.yaml
   save_dir: /runs
   device: cuda:0
-  pretrained: /content/main/detr-r50-e632da11.pth
+  pretrained: /content/data/detr-r50-e632da11.pth
   resume: null
 trainer:
   name: SupervisedTrainer
@@ -15,7 +15,7 @@ trainer:
     evaluate_interval: 1
     print_interval: 20
     save_interval: 1000
-    use_fp16: false
+    use_fp16: true
 callbacks:
   - name: LoggerCallbacks
   - name: CheckpointCallbacks
@@ -24,6 +24,8 @@ callbacks:
       username: kaylode
       project_name: isbi-detection 
   - name: DetectionVisualizerCallbacks
+    args:
+      order: cxcywh2xyxy
 model:
   name: DETRConvnext
   args:
@@ -76,23 +78,23 @@ data:
     train:
       name: COCODataset
       args:
-        image_dir: /content/data/coco/train2017
-        label_path: /content/data/coco/annotations/instances_train2017.json
+        image_dir: /content/data/aihcm20/images
+        label_path: /content/data/aihcm20/annotations/annotations_train.json
     val:
       name: COCODataset
       args:
-        image_dir: /content/data/coco/val2017
-        label_path: /content/data/coco/annotations/instances_val2017.json
+        image_dir: /content/data/aihcm20/images
+        label_path: /content/data/aihcm20/annotations/annotations_val.json
   dataloader:
     train:
       name: DataLoaderWithCollator
       args:
-        batch_size: 2
+        batch_size: 8
         drop_last: true
         shuffle: true
     val:
       name: DataLoaderWithCollator
       args:
-        batch_size: 2
+        batch_size: 8
         drop_last: false
         shuffle: false
