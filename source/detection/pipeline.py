@@ -19,6 +19,9 @@ class DetPipeline(Pipeline):
         super().init_registry()
         self.model_registry = MODEL_REGISTRY
         self.loss_registry = LOSS_REGISTRY
+        self.logger.text(
+            "Overidding registry in pipeline...", LoggerObserver.INFO
+        )
 
     def init_loading(self):
         self.resume = self.opt['global']['resume']
