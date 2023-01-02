@@ -79,6 +79,7 @@ class DETR(nn.Module):
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
     def __init__(self, min_conf=0.25):
+        super().__init__()
         self.min_conf = min_conf
 
     @torch.no_grad()

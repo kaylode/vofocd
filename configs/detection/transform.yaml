@@ -32,9 +32,6 @@ train:
                 max_pixel_value: 1.0
                 p: 1.0
             - name: AlbToTensorV2
-            
-      
-      
 val:
   name: DetCompose
   args:
