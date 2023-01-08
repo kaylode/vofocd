@@ -78,7 +78,7 @@ class DETRConvnext(nn.Module):
         """
         return self.model
 
-    def forward(self, batch: Dict, device: torch.device):
+    def forward_batch(self, batch: Dict, device: torch.device):
         x = move_to(batch['inputs'], device)
         outputs = self.model(x)
         return {
@@ -109,7 +109,7 @@ class DETRConvnext(nn.Module):
         device: `torch.device`
             current device 
         """
-        outputs = self.forward(adict, device)
+        outputs = self.forward_batch(adict, device)
 
         batch_size = outputs['outputs']['pred_logits'].shape[0]
         target_sizes = torch.Tensor([adict['img_sizes']]).repeat(batch_size, 1)

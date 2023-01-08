@@ -17,14 +17,9 @@ trainer:
     save_interval: 1000
     use_fp16: true
 callbacks:
-  - name: LoggerCallbacks
-  - name: CheckpointCallbacks
+  - name: TorchCheckpointCallbacks
     args:
       best_key: f1_score
-  - name: WandbCallbacks
-    args:
-      username: kaylode
-      project_name: isbi-detection 
   - name: DetectionVisualizerCallbacks
     args:
       order: cxcywh2xyxy
@@ -78,13 +73,13 @@ data:
     train:
       name: COCODataset
       args:
-        image_dir: data/aihcmc2020/images
-        label_path: data/aihcmc2020/annotations/annotations_train.json
+        image_dir: data/aim/images
+        label_path: data/aim/annotation.json
     val:
       name: COCODataset
       args:
-        image_dir: data/aihcmc2020/images
-        label_path: data/aihcmc2020/annotations/annotations_val.json
+        image_dir: data/aim/images
+        label_path: data/aim/annotation.json
   dataloader:
     train:
       name: DataLoaderWithCollator

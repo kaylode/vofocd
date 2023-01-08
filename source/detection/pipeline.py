@@ -1,19 +1,19 @@
 import torch
 from source.detection.models import MODEL_REGISTRY
 from source.detection.losses import LOSS_REGISTRY
-from theseus.cv.detection.pipeline import Pipeline
+from theseus.cv.detection.pipeline import DetectionPipeline
 from theseus.base.utilities.loading import load_state_dict
 from theseus.base.utilities.download import download_from_url
 from theseus.base.utilities.loggers import LoggerObserver
 
-class DetPipeline(Pipeline):
+class DetPipeline(DetectionPipeline):
     """docstring for Pipeline."""
 
     def __init__(
         self,
         opt
     ):
-        super(Pipeline, self).__init__(opt)
+        super(DetectionPipeline, self).__init__(opt)
         self.opt = opt
 
     def init_registry(self):
