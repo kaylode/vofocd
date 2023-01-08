@@ -13,7 +13,7 @@ class VocalDetectionDataset(COCODataset):
         transform: Optional[List] = None,
         **kwargs
     ):
-        super().__init__(image_dir, label_path, **kwargs)
+        super().__init__(image_dir, label_path, transform, **kwargs)
 
     def load_image(self, image_index):
         image_info = self.fns.loadImgs(self.image_ids[image_index])[0]
