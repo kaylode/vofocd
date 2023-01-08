@@ -5,7 +5,7 @@ global:
   cfg_transform: ./configs/detection/transform.yaml
   save_dir: /runs
   device: cuda:0
-  pretrained: /content/main/detr-r50-e632da11.pth
+  pretrained: weights/detr-r50-e632da11.pth
   resume: null
 trainer:
   name: SupervisedTrainer
@@ -19,17 +19,19 @@ trainer:
 callbacks:
   - name: LoggerCallbacks
   - name: CheckpointCallbacks
-  - name: WandbCallbacks
-    args:
-      username: kaylode
-      project_name: isbi-detection 
+  # - name: WandbCallbacks
+  #   args:
+  #     username: kaylode
+  #     project_name: isbi-detection 
   - name: DetectionVisualizerCallbacks
+    args:
+      order: cxcywh2xyxy
 model:
   name: DETRConvnext
   args:
     model_name: detr
-    backbone_name: resnet50
-    num_queries: 100
+    backbone_name: convnext_base
+    num_queries: 50
     min_conf: 0.25
     hidden_dim: 256
     position_embedding: sine
@@ -58,12 +60,15 @@ metrics:
   - name: DetectionPrecisionRecall
     args: 
        min_conf: 0.2
-       min_iou: 0.5
+       min_iou: 0.3
        eps: 1e-6
+  - name: MeanAveragePrecision
+    args: 
+       min_iou: 0.3
 optimizer:
   name: AdamW
   args:
-    lr: 0.00001
+    lr: 0.0001
     weight_decay: 0.0001
 scheduler:
   name: SchedulerWrapper
@@ -76,23 +81,23 @@ data:
     train:
       name: COCODataset
       args:
-        image_dir: /content/data/coco/train2017
-        label_path: /content/data/coco/annotations/instances_train2017.json
+        image_dir: data/aihcmc2020/images
+        label_path: data/aihcmc2020/annotations/annotations_train.json
     val:
       name: COCODataset
       args:
-        image_dir: /content/data/coco/val2017
-        label_path: /content/data/coco/annotations/instances_val2017.json
+        image_dir: data/aihcmc2020/images
+        label_path: data/aihcmc2020/annotations/annotations_val.json
   dataloader:
     train:
       name: DataLoaderWithCollator
       args:
-        batch_size: 2
+        batch_size: 8
         drop_last: true
         shuffle: true
     val:
       name: DataLoaderWithCollator
       args:
-        batch_size: 2
+        batch_size: 8
         drop_last: false
         shuffle: false
