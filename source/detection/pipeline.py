@@ -1,7 +1,8 @@
-import torch 
-from source.detection.models import MODEL_REGISTRY, ModelWithLossandPostprocess
+import torch
+from source.detection.models import MODEL_REGISTRY
 from source.detection.losses import LOSS_REGISTRY
 from theseus.cv.detection.pipeline import Pipeline
+<<<<<<< HEAD
 from theseus.base.utilities.getter import (get_instance, get_instance_recursively)
 from theseus.base.utilities.cuda import move_to, get_devices_info
 from theseus.base.utilities.loading import load_state_dict
@@ -9,6 +10,12 @@ from theseus.base.utilities.download import download_from_url
 from theseus.base.utilities.loggers import LoggerObserver
 
 class DetrPipeline(Pipeline):
+=======
+from theseus.base.utilities.loading import load_state_dict
+from theseus.base.utilities.download import download_from_url
+
+class DetPipeline(Pipeline):
+>>>>>>> 1718613455eb03c6c952899e26d83c7f3d276251
     """docstring for Pipeline."""
 
     def __init__(
@@ -22,6 +29,7 @@ class DetrPipeline(Pipeline):
         super().init_registry()
         self.model_registry = MODEL_REGISTRY
         self.loss_registry = LOSS_REGISTRY
+<<<<<<< HEAD
 
     def init_model(self):
         CLASSNAMES = self.val_dataset.classnames
@@ -57,6 +65,11 @@ class DetrPipeline(Pipeline):
             registry=self.metric_registry, 
             num_classes=len(CLASSNAMES),
             classnames=CLASSNAMES)
+=======
+        self.logger.text(
+            "Overidding registry in pipeline...", LoggerObserver.INFO
+        )
+>>>>>>> 1718613455eb03c6c952899e26d83c7f3d276251
 
     def init_loading(self):
         self.resume = self.opt['global']['resume']
