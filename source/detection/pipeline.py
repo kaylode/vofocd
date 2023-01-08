@@ -1,5 +1,6 @@
 import torch
 from source.detection.models import MODEL_REGISTRY
+from source.detection.datasets import DATASET_REGISTRY, DATALOADER_REGISTRY
 from source.detection.losses import LOSS_REGISTRY
 from theseus.cv.detection.pipeline import DetectionPipeline
 from theseus.base.utilities.loading import load_state_dict
@@ -20,6 +21,8 @@ class DetPipeline(DetectionPipeline):
         super().init_registry()
         self.model_registry = MODEL_REGISTRY
         self.loss_registry = LOSS_REGISTRY
+        self.dataset_registry = DATASET_REGISTRY
+        self.dataloader_registry = DATALOADER_REGISTRY
         self.logger.text(
             "Overidding registry in pipeline...", LoggerObserver.INFO
         )

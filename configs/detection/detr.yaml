@@ -23,6 +23,7 @@ callbacks:
   - name: DetectionVisualizerCallbacks
     args:
       order: cxcywh2xyxy
+  - name: TensorboardCallbacks
 model:
   name: DETRConvnext
   args:
@@ -71,12 +72,12 @@ scheduler:
 data:
   dataset:
     train:
-      name: COCODataset
+      name: VocalDetectionDataset
       args:
         image_dir: data/aim/images
         label_path: data/aim/annotation.json
     val:
-      name: COCODataset
+      name: VocalDetectionDataset
       args:
         image_dir: data/aim/images
         label_path: data/aim/annotation.json
