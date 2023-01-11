@@ -2,10 +2,10 @@ global:
   exp_name: null
   exist_ok: false
   debug: true
-  cfg_transform: ./configs/detection/transform.yaml
+  cfg_transform: ./configs/semantic/transform.yaml
   save_dir: /runs
   device: cuda:0
-  pretrained: weights/detr-r50-e632da11.pth
+  pretrained: /content/detr-r50-e632da11.pth
   resume: null
 trainer:
   name: SupervisedTrainer
@@ -15,25 +15,21 @@ trainer:
     evaluate_interval: 1
     print_interval: 20
     save_interval: 1000
-    use_fp16: false
+    use_fp16: true
 callbacks:
-  - name: TorchCheckpointCallbacks
-    args:
-      best_key: f1_score
-  - name: DetectionVisualizerCallbacks
-    args:
-      order: cxcywh2xyxy
+  - name: LoggerCallbacks
+  - name: CheckpointCallbacks
   - name: WandbCallbacks
     args:
       username: kaylode
-      project_name: isbi-detection
-  - name: TensorboardCallbacks
+      project_name: isbi-segmentation 
+  - name: SemanticVisualizerCallbacks
 model:
-  name: DETRConvnext
+  name: DETRSegmConvnext
   args:
     model_name: detr
-    backbone_name: convnext_base
-    num_queries: 10
+    backbone_name: resnet50
+    num_queries: 100
     min_conf: 0.25
     hidden_dim: 256
     position_embedding: sine
@@ -58,33 +54,36 @@ loss:
     cost_bbox: 5
     cost_giou: 2
     eos_coef: 0.1
-metrics: 
-  - name: MeanAveragePrecision
-    args: 
-       min_iou: 0.3
+metrics:
+  - name: PixelAccuracy
+    args:
+      ignore_index: 0
+  - name: DiceScore
+    args:
+      ignore_index: 0
 optimizer:
   name: AdamW
   args:
-    lr: 0.0003
+    lr: 0.00005
     weight_decay: 0.0001
 scheduler:
   name: SchedulerWrapper
   args:
     scheduler_name: multistep
-    milestones: [40000, 70000]
+    milestones: [20000, 50000]
     gamma: 0.1
 data:
   dataset:
     train:
-      name: VocalDetectionDataset
+      name: COCODataset
       args:
-        image_dir: data/aim/images
-        label_path: data/aim/annotation.json
+        image_dir: /content/data/aihcm20/images
+        label_path: /content/data/aihcm20/annotations/annotations_train.json
     val:
-      name: VocalDetectionDataset
+      name: COCODataset
       args:
-        image_dir: data/aim/images
-        label_path: data/aim/annotation.json
+        image_dir: /content/data/aihcm20/images
+        label_path: /content/data/aihcm20/annotations/annotations_val.json
   dataloader:
     train:
       name: DataLoaderWithCollator

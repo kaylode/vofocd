@@ -1,4 +1,5 @@
-from .coco import COCODataset
-from theseus.cv.classification.datasets import DATASET_REGISTRY
+from theseus.base.datasets import DATALOADER_REGISTRY, DATASET_REGISTRY
 
-DATASET_REGISTRY.register(COCODataset)
+from .vocal import VocalDetectionDataset
+
+DATASET_REGISTRY.register(VocalDetectionDataset)

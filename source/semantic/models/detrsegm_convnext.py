@@ -29,6 +29,7 @@ class DETRSegmConvnext(nn.Module):
         backbone_name: str = 'convnext_base',
         num_classes: int = 1000,
         num_queries: int = 100,
+        aux_loss: bool = True,
         classnames: Optional[List] = None,
         freeze: bool = False,
         freeze_detr: bool = False,
@@ -62,15 +63,15 @@ class DETRSegmConvnext(nn.Module):
             return_intermediate_dec=True,
         )
 
-        self.postprocessor_box = PostProcess()
+        self.postprocessor_box = PostProcess(min_conf=min_conf)
         self.postprocessor_mask = PostProcessSegm()
         
-        detr_model = DETR(
+        self.model = DETR(
             backbone,
             transformer,
             num_classes=num_classes,
             num_queries=num_queries,
-            aux_loss=False
+            aux_loss=aux_loss
         )
 
         self.model = DETRsegm(detr_model, freeze_detr=freeze_detr)
@@ -95,11 +96,59 @@ class DETRSegmConvnext(nn.Module):
             target_sizes=batch['img_sizes']
         )
 
-        masks = self.postprocessor(
+        masks = self.postprocessor_mask(
             results = boxes,
             outputs = outputs['outputs'],
             orig_target_sizes=batch['img_sizes'],
             max_target_sizes=batch['target_sizes']
         )
 
-        return masks
+        denormalized_targets = batch['targets']
+        denormalized_targets = self.postprocessor(
+            outputs = denormalized_targets,
+            target_sizes=batch['img_sizes']
+        )
+
+        batch['targets'] = denormalized_targets
+
+        return masks, batch
+    
+    @torch.no_grad()
+    def get_prediction(self, adict: Dict[str, Any], device: torch.device):
+        """
+        Inference using the model.
+        adict: `Dict[str, Any]`
+            dictionary of inputs
+        device: `torch.device`
+            current device 
+        """
+        outputs = self.forward(adict, device)
+
+        batch_size = outputs['outputs']['pred_logits'].shape[0]
+        target_sizes = torch.Tensor([adict['img_sizes']]).repeat(batch_size, 1)
+        results = self.postprocessor(
+            outputs = outputs['outputs'],
+            target_sizes=target_sizes
+        )
+        
+        scores = []
+        bboxes = []
+        classids = []
+        classnames = []
+        for result in results:
+            score = move_to(detach(result['scores']), torch.device('cpu')).numpy().tolist()
+            boxes = move_to(detach(result['boxes']), torch.device('cpu')).numpy().tolist()
+            classid = move_to(detach(result['labels']), torch.device('cpu')).numpy().tolist()
+            scores.append(score)
+            bboxes.append(boxes)
+            classids.append(classid)
+            if self.classnames:
+                classname = [self.classnames[int(clsid)] for clsid in classid]
+                classnames.append(classname)
+
+        return {
+            'boxes': bboxes,
+            'labels': classids,
+            'confidences': scores, 
+            'names': classnames,
+        }
