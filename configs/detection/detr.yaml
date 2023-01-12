@@ -5,7 +5,7 @@ global:
   cfg_transform: ./configs/detection/transform.yaml
   save_dir: /runs
   device: cuda:0
-  pretrained: weights/detr-r50-e632da11.pth
+  pretrained: null #weights/detr-r50-e632da11.pth
   resume: null
 trainer:
   name: SupervisedTrainer
@@ -26,7 +26,7 @@ callbacks:
   - name: WandbCallbacks
     args:
       username: kaylode
-      project_name: isbi-detection
+      project_name: vocal-folds-aim
   - name: TensorboardCallbacks
 model:
   name: DETRConvnext
@@ -78,13 +78,13 @@ data:
     train:
       name: VocalDetectionDataset
       args:
-        image_dir: data/aim/images
-        label_path: data/aim/annotation.json
+        image_dir: data/aim/images/Train_4classes
+        label_path: data/aim/annotations/annotation_0_train.json
     val:
       name: VocalDetectionDataset
       args:
-        image_dir: data/aim/images
-        label_path: data/aim/annotation.json
+        image_dir: data/aim/images/Train_4classes
+        label_path: data/aim/annotations/annotation_0_val.json
   dataloader:
     train:
       name: DataLoaderWithCollator
@@ -97,4 +97,4 @@ data:
       args:
         batch_size: 8
         drop_last: false
-        shuffle: false
+        shuffle: true
