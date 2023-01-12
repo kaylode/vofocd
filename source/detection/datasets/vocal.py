@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import cv2
 import numpy as np
-from .coco import COCODataset
+from theseus.cv.detection.datasets.coco import COCODataset
 
 class VocalDetectionDataset(COCODataset):
     def __init__(
