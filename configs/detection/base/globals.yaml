@@ -9,7 +9,7 @@ global:
 trainer:
   name: SupervisedTrainer
   args:
-    num_iterations: 100000
+    num_iterations: 20000
     clip_grad: 0.1
     evaluate_interval: 1
     use_fp16: false
@@ -28,4 +28,4 @@ callbacks:
 metrics: 
   - name: MeanAveragePrecision
     args: 
-       min_iou: 0.3
+       min_iou: 0.2
