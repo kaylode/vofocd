@@ -1,0 +1,31 @@
+global:
+  exp_name: null
+  exist_ok: false
+  debug: true
+  save_dir: /runs
+  device: cuda:0
+  pretrained: weights/detr-r50-e632da11.pth
+  resume: null
+trainer:
+  name: SupervisedTrainer
+  args:
+    num_iterations: 100000
+    clip_grad: 0.1
+    evaluate_interval: 1
+    use_fp16: false
+callbacks:
+  - name: TorchCheckpointCallbacks
+    args:
+      best_key: f1_score
+  - name: DetectionVisualizerCallbacks
+    args:
+      order: cxcywh2xyxy
+  - name: WandbCallbacks
+    args:
+      username: kaylode
+      project_name: vocal-folds-aim
+  - name: TensorboardCallbacks
+metrics: 
+  - name: MeanAveragePrecision
+    args: 
+       min_iou: 0.3

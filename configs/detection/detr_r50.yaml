@@ -1,0 +1,36 @@
+includes:
+  - configs/detection/base/globals.yaml
+  - configs/detection/base/optimizer.yaml
+  - configs/detection/data/aim.yaml
+  - configs/detection/base/transform.yaml
+
+model:
+  name: DETRConvnext
+  args:
+    model_name: detr
+    backbone_name: resnet50
+    num_queries: 10
+    min_conf: 0.25
+    hidden_dim: 256
+    position_embedding: sine
+    freeze_backbone: false
+    dilation: false
+    dropout: 0.1
+    nheads: 8
+    dim_feedforward: 2048
+    enc_layers: 6
+    dec_layers: 6
+    pre_norm: false
+    aux_loss: true
+loss:
+  name: DETRLosses
+  args:
+    loss_ce: 1
+    loss_bbox: 5
+    loss_giou: 2
+    loss_mask: null
+    loss_dice: null
+    cost_class: 1
+    cost_bbox: 5
+    cost_giou: 2
+    eos_coef: 0.1
