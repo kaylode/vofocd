@@ -6,6 +6,7 @@ global:
   device: cuda:0
   pretrained: weights/detr-r50-e632da11.pth
   resume: null
+  weights: null
 trainer:
   name: SupervisedTrainer
   args:
