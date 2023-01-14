@@ -86,15 +86,18 @@ class DETRConvnext(nn.Module):
         }
 
     def postprocess(self, outputs: Dict, batch: Dict):
+        batch_size = outputs['outputs']['pred_logits'].shape[0]
+        target_sizes = torch.Tensor([batch['inputs'].shape[-2:]]).repeat(batch_size, 1)
+
         results = self.postprocessor(
             outputs = outputs['outputs'],
-            target_sizes=batch['img_sizes']
+            target_sizes=target_sizes
         )
 
         denormalized_targets = batch['targets']
         denormalized_targets = self.postprocessor(
             outputs = denormalized_targets,
-            target_sizes=batch['img_sizes']
+            target_sizes=target_sizes
         )
 
         batch['targets'] = denormalized_targets
@@ -112,7 +115,8 @@ class DETRConvnext(nn.Module):
         outputs = self.forward_batch(adict, device)
 
         batch_size = outputs['outputs']['pred_logits'].shape[0]
-        target_sizes = torch.Tensor([adict['img_sizes']]).repeat(batch_size, 1)
+        target_sizes = torch.Tensor([adict['inputs'].shape[-2:]]).repeat(batch_size, 1)
+
         results = self.postprocessor(
             outputs = outputs['outputs'],
             target_sizes=target_sizes
