@@ -1,0 +1,6 @@
+L_Vocal Fold
+L_Arytenoid cartilage
+Benign lesion
+Malignant lesion
+R_Vocal Fold
+R_Arytenoid cartilage
