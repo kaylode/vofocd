@@ -1,0 +1,13 @@
+includes:
+  - configs/classification/base/globals.yaml
+  - configs/classification/base/optimizer.yaml
+  - configs/classification/base/transform.yaml
+  - configs/classification/data/kvasir.yaml
+
+model:
+  name: ConvNeXt
+  args:
+    depths: [3, 3, 27, 3]
+    dims: [128, 256, 512, 1024]
+loss:
+  name: ClassificationCELoss

@@ -1,0 +1,35 @@
+global:
+  exp_name: null
+  exist_ok: false
+  debug: true
+  save_dir: /runs
+  device: cuda:0
+  pretrained: null
+  resume: null
+  weights: null
+trainer:
+  name: SupervisedTrainer
+  args:
+    num_iterations: 20000
+    clip_grad: 10.0
+    evaluate_interval: 1
+    use_fp16: false
+callbacks:
+- name: TorchCheckpointCallbacks
+  args:
+    best_key: bl_acc
+- name: ClassificationVisualizerCallbacks
+- name: WandbCallbacks
+  args:
+    username: kaylode
+    project_name: vocal-folds-aim
+    group_name: pretrained
+- name: TensorboardCallbacks
+metrics:
+- name: Accuracy
+- name: BalancedAccuracyMetric
+- name: F1ScoreMetric
+  args:
+    average: weighted
+- name: ConfusionMatrix
+- name: ErrorCases
