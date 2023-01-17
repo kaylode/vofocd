@@ -5,7 +5,9 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-
+from typing import Dict, Any
+from theseus.base.utilities.cuda import move_to, detach
+from theseus.base.utilities.logits import logits2labels
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -64,9 +66,11 @@ class ConvNeXt(nn.Module):
     """
     def __init__(self, in_chans=3, num_classes=1000, 
                  depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], drop_path_rate=0., 
-                 layer_scale_init_value=1e-6, head_init_scale=1., **kwargs
+                 layer_scale_init_value=1e-6, head_init_scale=1., classnames=None, **kwargs
                  ):
         super().__init__()
+
+        self.classnames = classnames
         self.feature_dims = dims
         self.downsample_layers = nn.ModuleList() # stem and 3 intermediate downsampling conv layers
         stem = nn.Sequential(
@@ -120,6 +124,64 @@ class ConvNeXt(nn.Module):
             return x, inter_features
         else:
             return x 
+
+    def get_model(self):
+        """
+        Return the full architecture of the model, for visualization
+        """
+        return self
+
+    def forward_batch(self, batch: Dict, device: torch.device):
+        x = move_to(batch["inputs"], device)
+        outputs, feat = self.forward(x, return_features=True)
+        return {"outputs": outputs, "features": feat}
+
+    def get_prediction(self, adict: Dict[str, Any], device: torch.device):
+        """
+        Inference using the model.
+        adict: `Dict[str, Any]`
+            dictionary of inputs
+        device: `torch.device`
+            current device
+        """
+        outputs = self.forward_batch(adict, device)["outputs"]
+
+        if not adict.get("multilabel"):
+            outputs, probs = logits2labels(
+                outputs, label_type="multiclass", return_probs=True
+            )
+        else:
+            outputs, probs = logits2labels(
+                outputs,
+                label_type="multilabel",
+                threshold=adict["threshold"],
+                return_probs=True,
+            )
+
+            if adict.get("no-zeroes"):
+                argmaxs = torch.argmax(probs, dim=1)
+                tmp = torch.sum(outputs, dim=1)
+                one_hots = F.one_hot(argmaxs, outputs.shape[1])
+                outputs[tmp == 0] = one_hots[tmp == 0].bool()
+
+        probs = move_to(detach(probs), torch.device("cpu")).numpy()
+        classids = move_to(detach(outputs), torch.device("cpu")).numpy()
+
+        if self.classnames and not adict.get("multilabel"):
+            classnames = [self.classnames[int(clsid)] for clsid in classids]
+        elif self.classnames and adict.get("multilabel"):
+            classnames = [
+                [self.classnames[int(i)] for i, c in enumerate(clsid) if c]
+                for clsid in classids
+            ]
+        else:
+            classnames = []
+
+        return {
+            "labels": classids,
+            "confidences": probs,
+            "names": classnames,
+        }
 
 class LayerNorm(nn.Module):
     r""" LayerNorm that supports two data formats: channels_last (default) or channels_first. 

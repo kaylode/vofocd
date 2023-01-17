@@ -4,8 +4,8 @@ from torch import nn
 from theseus.base.utilities.cuda import move_to, detach
 from theseus.base.utilities.logits import logits2labels
 
-from .base import MedTEX
-from .explainer import ConvAutoencoder, NestedUNet
+from source.classification.models.base import MedTEX
+from source.classification.models.explainer import ConvAutoencoder, NestedUNet
 from .subnetwork import Subnetwork
 
 """

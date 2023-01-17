@@ -1,23 +1,24 @@
 import os
 import torch
 from theseus.opt import Config
-from theseus.cv.classification.pipeline import Pipeline
+from theseus.cv.classification.pipeline import ClassificationPipeline
 from theseus.base.pipeline import BaseTestPipeline
 from source.classification.losses import LOSS_REGISTRY
 from source.classification.models import MODEL_REGISTRY
 from source.classification.callbacks import CALLBACKS_REGISTRY
+from source.classification.datasets import DATASET_REGISTRY
 from theseus.base.utilities.loading import load_state_dict
 from theseus.base.utilities.loggers import LoggerObserver
 
 
-class ClassificationPipeline(Pipeline):
+class DistillationPipeline(ClassificationPipeline):
     """docstring for Pipeline."""
 
     def __init__(
         self,
         opt: Config
     ):
-        super(Pipeline, self).__init__(opt)
+        super(DistillationPipeline, self).__init__(opt)
         self.opt = opt
         self.stage = self.opt["global"]["stage"]
         os.environ["WANDB_ENTITY"] = "kaylode"
@@ -26,6 +27,7 @@ class ClassificationPipeline(Pipeline):
         self.model_registry = MODEL_REGISTRY
         self.loss_registry = LOSS_REGISTRY
         self.callbacks_registry = CALLBACKS_REGISTRY
+        self.dataset_registry = DATASET_REGISTRY
         self.logger.text(
             "Overidding registry in pipeline...", LoggerObserver.INFO
         )
@@ -35,21 +37,15 @@ class ClassificationPipeline(Pipeline):
         self.resume = self.opt['global']['resume']
         self.last_epoch = -1
 
-        if self.stage == 'normal':
-            self.pretrained = self.opt['global']['pretrained']
-            if self.pretrained:
-                state_dict = torch.load(self.pretrained, map_location='cpu')
-                self.model.model = load_state_dict(self.model.model, state_dict, 'model')
-        elif self.stage == 'distillation':
-            self.pretrained_teacher = self.opt['global']['pretrained_teacher']
-            if self.pretrained_teacher:
-                state_dict = torch.load(self.pretrained_teacher, map_location='cpu')
-                self.model.model.teacher = load_state_dict(self.model.model.teacher, state_dict, 'model')
+        self.pretrained_teacher = self.opt['global']['pretrained_teacher']
+        if self.pretrained_teacher:
+            state_dict = torch.load(self.pretrained_teacher, map_location='cpu')
+            self.model.model.teacher = load_state_dict(self.model.model.teacher, state_dict, 'model')
 
-            self.pretrained_student = self.opt['global']['pretrained_student']
-            if self.pretrained_student:
-                state_dict = torch.load(self.pretrained_student, map_location='cpu')
-                self.model.model.student = load_state_dict(self.model.model.student, state_dict, 'model')
+        self.pretrained_student = self.opt['global']['pretrained_student']
+        if self.pretrained_student:
+            state_dict = torch.load(self.pretrained_student, map_location='cpu')
+            self.model.model.student = load_state_dict(self.model.model.student, state_dict, 'model')
 
         if self.resume:
             state_dict = torch.load(self.resume)
