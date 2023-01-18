@@ -3,7 +3,7 @@
 Backbone modules.
 """
 from collections import OrderedDict
-
+from theseus.base.utilities.loading import load_state_dict
 import torch
 import torch.nn.functional as F
 import torchvision
@@ -12,7 +12,6 @@ from torchvision.models._utils import IntermediateLayerGetter
 from typing import Dict, List
 from source.detection.models.detr_utils.misc import NestedTensor
 from .position_encoding import build_position_encoding
-import timm
 
 from source.classification.models.backbone.convnext import model_factory
 
@@ -124,7 +123,8 @@ def build_backbone(
         position_embedding='sine', 
         freeze_backbone=False, 
         dilation=True,
-        return_interm_layers=False
+        return_interm_layers=False,
+        pretrained_backbone=None
     ):
     position_embedding = build_position_encoding(hidden_dim, position_embedding)
 
@@ -139,4 +139,8 @@ def build_backbone(
         )
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels
+
+    if pretrained_backbone is not None:
+        state_dict = torch.load(pretrained_backbone, map_location='cpu')
+        load_state_dict(model, state_dict, key='model', strict=False)
     return model

@@ -26,6 +26,7 @@ class DETRConvnext(nn.Module):
         self,
         model_name: str,
         backbone_name: str = 'convnext_base',
+        pretrained_backbone: str = None,
         num_classes: int = 1000,
         num_queries: int = 100,
         min_conf: float = 0.25,
@@ -47,7 +48,8 @@ class DETRConvnext(nn.Module):
             position_embedding=kwargs.get('position_embedding', 'sine'), 
             freeze_backbone=kwargs.get('freeze_backbone', False), 
             dilation=kwargs.get('dilation', True),
-            return_interm_layers=False
+            return_interm_layers=False,
+            pretrained_backbone=pretrained_backbone
         )
         
 
