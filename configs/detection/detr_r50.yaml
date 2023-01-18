@@ -4,12 +4,22 @@ includes:
   - configs/detection/data/aim.yaml
   - configs/detection/base/transform.yaml
 
+global:
+  exp_name: null
+  exist_ok: false
+  debug: true
+  save_dir: /runs
+  device: cuda:0
+  pretrained: weights/detr-r50-e632da11.pth
+  resume: null
+  weights: null
+  pretrained_backbone: weights/kvasir_resnet50_fold0/checkpoints/best.pth
+
 model:
   name: DETRConvnext
   args:
     model_name: detr
     backbone_name: resnet50
-    pretrained_backbone: /mnt/4TBSSD/pmkhoi/isbi/weights/kvasir_resnet50_fold0/checkpoints/best.pth
     num_queries: 10
     min_conf: 0.25
     hidden_dim: 256
