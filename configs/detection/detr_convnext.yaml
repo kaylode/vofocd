@@ -9,6 +9,7 @@ model:
   args:
     model_name: detr
     backbone_name: convnext_base
+    pretrained_backbone: /mnt/4TBSSD/pmkhoi/isbi/weights/kvasir_convnext_fold0/checkpoints/best.pth
     num_queries: 10
     min_conf: 0.25
     hidden_dim: 256

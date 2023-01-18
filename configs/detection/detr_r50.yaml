@@ -9,6 +9,7 @@ model:
   args:
     model_name: detr
     backbone_name: resnet50
+    pretrained_backbone: /mnt/4TBSSD/pmkhoi/isbi/weights/kvasir_resnet50_fold0/checkpoints/best.pth
     num_queries: 10
     min_conf: 0.25
     hidden_dim: 256

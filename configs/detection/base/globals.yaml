@@ -4,7 +4,7 @@ global:
   debug: true
   save_dir: /runs
   device: cuda:0
-  pretrained: weights/detr-r50-e632da11.pth
+  pretrained: null
   resume: null
   weights: null
 trainer:
@@ -25,6 +25,7 @@ callbacks:
     args:
       username: kaylode
       project_name: vocal-folds-aim
+      group_name: detection
   - name: TensorboardCallbacks
 metrics: 
   - name: MeanAveragePrecision
