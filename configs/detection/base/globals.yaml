@@ -21,10 +21,10 @@ callbacks:
   - name: DetectionVisualizerCallbacks
     args:
       order: cxcywh2xyxy
-  - name: WandbCallbacks
-    args:
-      username: kaylode
-      project_name: vocal-folds-aim
+  # - name: WandbCallbacks
+  #   args:
+  #     username: kaylode
+  #     project_name: vocal-folds-aim
   - name: TensorboardCallbacks
 metrics: 
   - name: MeanAveragePrecision

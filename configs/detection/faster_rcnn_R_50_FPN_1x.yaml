@@ -1,0 +1,14 @@
+includes:
+  - configs/detection/base/globals.yaml
+  - configs/detection/base/optimizer.yaml
+  - configs/detection/data/aim.yaml
+  - configs/detection/base/transform.yaml
+
+model:
+  name: FasterRCNN
+  args:
+      model_name: fasterrcnn
+      weights: DEFAULT
+
+loss:
+  
