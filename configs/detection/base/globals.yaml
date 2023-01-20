@@ -2,7 +2,7 @@ global:
   exp_name: null
   exist_ok: false
   debug: true
-  save_dir: /runs
+  save_dir: ./runs
   device: cuda:0
   pretrained: null
   resume: null
@@ -10,7 +10,7 @@ global:
 trainer:
   name: SupervisedTrainer
   args:
-    num_iterations: 20000
+    num_iterations: 100000
     clip_grad: 0.1
     evaluate_interval: 1
     use_fp16: false

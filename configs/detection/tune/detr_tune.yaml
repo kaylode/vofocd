@@ -1,0 +1,30 @@
+includes:
+  - configs/detection/base/globals.yaml
+  - configs/detection/base/optimizer.yaml
+  - configs/detection/data/aim.yaml
+  - configs/detection/base/transform.yaml
+  - configs/detection/models/detr_convnext.yaml
+
+optimizer:
+  name: AdamW
+  args:
+    lr: [0.00001, 0.0001]
+scheduler: null
+  # name: SchedulerWrapper
+  # args:
+  #   scheduler_name: multistep
+  #   milestones: [10000, 20000, 25000]
+  #   gamma: 0.5
+
+trainer:
+  name: SupervisedTrainer
+  args:
+    num_iterations: 1000
+    clip_grad: null
+    evaluate_interval: 0
+    use_fp16: false
+callbacks: []
+
+optuna:
+  float:
+    - optimizer.args.lr
