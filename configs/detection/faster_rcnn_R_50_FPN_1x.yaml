@@ -2,7 +2,7 @@ includes:
   - configs/detection/base/globals.yaml
   - configs/detection/base/optimizer.yaml
   - configs/detection/data/aim.yaml
-  - configs/detection/base/transform.yaml
+  - configs/detection/transform_faster_rcnn.yaml
 
 model:
   name: FasterRCNN
@@ -10,5 +10,39 @@ model:
       model_name: fasterrcnn
       weights: DEFAULT
 
+trainer:
+  name: SupervisedTrainer
+  args:
+    num_iterations: 40000 #20000
+    clip_grad: 0.1
+    evaluate_interval: 1
+    use_fp16: false
+      
 loss:
+
+data:
+  dataset:
+    train:
+      name: VocalDetectionDataset
+      args:
+        image_dir: data/aim/images/Train_4classes
+        label_path: data/aim/annotations/annotation_0_train.json
+    val:
+      name: VocalDetectionDataset
+      args:
+        image_dir: data/aim/images/Train_4classes
+        label_path: data/aim/annotations/annotation_0_val.json
+  dataloader:
+    train:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 4 #8
+        drop_last: true
+        shuffle: true
+    val:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 4 #8
+        drop_last: false
+        shuffle: true
   

@@ -3,3 +3,4 @@ data/
 runs/
 .cache/
 *.out
+slurm_run.sh
