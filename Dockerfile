@@ -53,9 +53,9 @@ WORKDIR /workspace/vocal-folds/
 RUN /opt/mamba/bin/python -m pip install -r requirements.txt
 RUN /opt/mamba/bin/python -m pip install -U timm
 RUN chmod +x scripts/misc/*
-RUN scripts/misc/download_vocals.sh
-RUN scripts/misc/download_kvasir.sh
+# RUN scripts/misc/download_kvasir.sh
 RUN scripts/misc/download_weights.sh
+RUN scripts/misc/download_vocals.sh
 
 FROM ${BASE_IMAGE} as official
 SHELL ["/bin/bash", "-c"]
