@@ -3,12 +3,12 @@ includes:
   - configs/detection/base/optimizer.yaml
   - configs/detection/data/aim.yaml
   - configs/detection/base/transform.yaml
-  - configs/detection/models/detr_convnext.yaml
+  - configs/detection/models/detr_custom.yaml
 
 optimizer:
   name: AdamW
   args:
-    lr: [0.00001, 0.0001]
+    lr: [0.00001, 0.001]
 scheduler: null
   # name: SchedulerWrapper
   # args:

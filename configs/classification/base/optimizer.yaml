@@ -2,7 +2,6 @@ optimizer:
   name: AdamW
   args:
     lr: 0.001
-    weight_decay: 5.0e-05
     betas:
     - 0.937
     - 0.999

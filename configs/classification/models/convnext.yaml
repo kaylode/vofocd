@@ -2,12 +2,12 @@ includes:
   - configs/classification/base/globals.yaml
   - configs/classification/base/optimizer.yaml
   - configs/classification/base/transform.yaml
-  - configs/classification/data/kvasir.yaml
+  - configs/classification/data/vocals.yaml
 
 model:
-  name: ConvNeXt
+  name: BaseTimmModel
   args:
-    depths: [3, 3, 27, 3]
-    dims: [128, 256, 512, 1024]
+    model_name: convnext_base
+    from_pretrained: true
 loss:
   name: ClassificationCELoss
