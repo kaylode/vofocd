@@ -2,8 +2,6 @@
 """
 Backbone modules.
 """
-from collections import OrderedDict
-from theseus.base.utilities.loading import load_state_dict
 import torch
 import torch.nn.functional as F
 import torchvision
@@ -12,8 +10,7 @@ from torchvision.models._utils import IntermediateLayerGetter
 from typing import Dict, List
 from source.detection.models.detr_utils.misc import NestedTensor
 from .position_encoding import build_position_encoding
-
-from source.classification.models.backbone.convnext import model_factory
+from .custom_backbone import CustomBackbone
 
 class FrozenBatchNorm2d(torch.nn.Module):
     """
@@ -51,29 +48,6 @@ class FrozenBatchNorm2d(torch.nn.Module):
         scale = w * (rv + eps).rsqrt()
         bias = b - rm * scale
         return x * scale + bias
-
-class BackboneConvnext(nn.Module):
-    def __init__(self, backbone_name: str, return_interm_layers: bool, **kwargs):
-        super().__init__()
-        backbone = model_factory[backbone_name]()
-        self.body = backbone
-        self.return_interm_layers = return_interm_layers
-        self.num_channels = backbone.feature_dims[-1]
-        
-    def forward(self, tensor_list: NestedTensor):
-        inter_features, _ = self.body.forward_features(tensor_list.tensors)
-        xs = {
-            str(k):v for k,v in enumerate(inter_features)
-        }
-  
-        out: Dict[str, NestedTensor] = {}
-        for name, x in xs.items():
-            m = tensor_list.mask
-            assert m is not None
-            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0]
-            out[name] = NestedTensor(x, mask)
-        return out
-
 
 class BackboneBase(nn.Module):
 
@@ -124,12 +98,11 @@ def build_backbone(
         freeze_backbone=False, 
         dilation=True,
         return_interm_layers=False,
-        pretrained_backbone=None
     ):
     position_embedding = build_position_encoding(hidden_dim, position_embedding)
 
-    if 'convnext' in backbone_name:
-        backbone = BackboneConvnext(backbone_name, return_interm_layers=return_interm_layers)
+    if 'resnet' not in backbone_name:
+        backbone = CustomBackbone(backbone_name, return_interm_layers=return_interm_layers)
     else:
         backbone = BackboneBase(
             backbone_name, 
@@ -140,7 +113,4 @@ def build_backbone(
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels
 
-    if pretrained_backbone is not None:
-        state_dict = torch.load(pretrained_backbone, map_location='cpu')
-        load_state_dict(model, state_dict, key='model', strict=False)
     return model

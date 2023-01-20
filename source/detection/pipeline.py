@@ -7,6 +7,8 @@ from theseus.base.utilities.loggers import LoggerObserver
 
 from theseus.base.utilities.loading import load_state_dict
 
+LOGGER = LoggerObserver.getLogger('main')
+
 class DetPipeline(DetectionPipeline):
     """docstring for Pipeline."""
 
@@ -41,6 +43,14 @@ class DetPipeline(DetectionPipeline):
                 state_dict, 
                 key="model", strict=False
             )
+
+        # Freeze all norm layers of backbone
+        # https://github.com/facebookresearch/detr/issues/154
+        try:
+            self.model.model.model.backbone[0].freeze_norm_layers()
+            LOGGER.text("Freezed normalization layers.", level=LoggerObserver.DEBUG)
+        except:
+            LOGGER.text("Failed to freeze normalization layers. Continue training...", level=LoggerObserver.WARN)
 
         if getattr(self, "resume", None):
             state_dict = torch.load(self.resume, map_location="cpu")
