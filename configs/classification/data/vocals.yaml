@@ -1,0 +1,28 @@
+data:
+  dataset:
+    train:
+      name: VocalClassificationDataset
+      args:
+        image_dir: data/aim/images/Train_4classes
+        json_path: data/aim/annotations/annotation_0_train.json
+    val:
+      name: VocalClassificationDataset
+      args:
+        image_dir: data/aim/images/Train_4classes
+        json_path: data/aim/annotations/annotation_0_val.json
+  dataloader:
+    train:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 32
+        drop_last: true
+        shuffle: false
+        sampler:
+          name: BalanceSampler
+          args:
+    val:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 32
+        drop_last: false
+        shuffle: true
