@@ -1,5 +1,4 @@
-from source.classification.models import MODEL_REGISTRY
-from .detr_convnext import DETRConvnext
-from .wrapper import ModelWithLossandPostprocess
+from theseus.cv.detection.models import MODEL_REGISTRY
+from .detr_custom import DETRCustomBackbone
 
-MODEL_REGISTRY.register(DETRConvnext)
+MODEL_REGISTRY.register(DETRCustomBackbone)

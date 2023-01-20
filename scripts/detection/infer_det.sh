@@ -1,4 +1,6 @@
+CONFIG_PATH=$1
+WEIGHT_PATH=$2
 PYTHONPATH=. python3 tools/infer_det.py \
-              -c configs/detection/test/detr_r50.yaml \
+              -c $CONFIG_PATH \
               -o global.save_dir=runs \
-              global.weights=weights/detr_r50_pt/checkpoints/best.pth 
+              global.weights=$WEIGHT_PATH

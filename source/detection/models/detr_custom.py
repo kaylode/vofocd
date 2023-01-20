@@ -9,7 +9,7 @@ from .detr_components.transformer import Transformer
 from .detr_components.backbone import build_backbone
 from .detr_components.detr import DETR, PostProcess
 
-class DETRConvnext(nn.Module):
+class DETRCustomBackbone(nn.Module):
     """Convolution models from timm
     
     name: `str`
@@ -26,7 +26,6 @@ class DETRConvnext(nn.Module):
         self,
         model_name: str,
         backbone_name: str = 'convnext_base',
-        pretrained_backbone: str = None,
         num_classes: int = 1000,
         num_queries: int = 100,
         min_conf: float = 0.25,
@@ -48,10 +47,8 @@ class DETRConvnext(nn.Module):
             position_embedding=kwargs.get('position_embedding', 'sine'), 
             freeze_backbone=kwargs.get('freeze_backbone', False), 
             dilation=kwargs.get('dilation', True),
-            return_interm_layers=False,
-            pretrained_backbone=pretrained_backbone
+            return_interm_layers=False
         )
-        
 
         transformer = Transformer(
             d_model=kwargs.get('hidden_dim', 256),
