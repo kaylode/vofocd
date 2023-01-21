@@ -9,3 +9,4 @@ PYTHONPATH=. python3 tools/train_cls.py \
               model.args.model_name=${MODEL_NAME} \
               data.dataset.train.args.json_path=data/aim/annotations/annotation_${FOLD_ID}_train.json \
               data.dataset.val.args.json_path=data/aim/annotations/annotation_${FOLD_ID}_val.json
+              #global.resume=/content/weights/checkpoints/last.pth
