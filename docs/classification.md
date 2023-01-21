@@ -6,19 +6,17 @@
 ## **Execution**
 
 Run train scripts:
+```
+sh scripts/classification/train_cls.sh {model_name} {fold_id}
+```
 
-- Raw images --> convnext_small: `sh scripts/classification/train_small_only.sh`
-- Raw images --> convnext_nano: `sh scripts/classification/train_nano_only.sh`
-- Raw images --> unet --> convnext_nano: `sh scripts/classification/train_nano_unet.sh`
-- Raw images --> medtex (small+nano): `sh scripts/classification/train_medtex_basic.sh`
-- Raw images (teacher) + Ersgan (student) --> medtex (small+nano): `sh scripts/classification/train_medtex_ersgan_1.sh`
-- Raw images (teacher, student) + Ersgan (student) --> medtex (small+nano): Upcoming
-
+Example: `sh scripts/classification/train_cls.sh convnext_pico 0`
 
 Run eval script:
 ```
-sh scripts/classification/eval.sh {run_name} {config_path} {weight}
+sh scripts/classification/eval_cls.sh {config_path} {weight} {fold_id}
 ```
+Example: `sh scripts/classification/eval_cls.sh runs/convnext_pico/pipeline.yaml runs/convnext_pico/checkpoints/best.pth 0`
 
 
 ## **Resources**

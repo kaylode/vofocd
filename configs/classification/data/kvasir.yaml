@@ -1,0 +1,30 @@
+data:
+  dataset:
+    train:
+      name: KvasirDataset
+      args:
+        image_dir: data/kvasir
+        csv_path: data/kvasir/folds/train_fold0.csv
+        txt_classnames: data/kvasir/kvasir_classnames.txt
+    val:
+      name: KvasirDataset
+      args:
+        image_dir: data/kvasir
+        csv_path: data/kvasir/folds/val_fold0.csv
+        txt_classnames: data/kvasir/kvasir_classnames.txt
+  dataloader:
+    train:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 32
+        drop_last: true
+        shuffle: false
+        sampler:
+          name: BalanceSampler
+          args:
+    val:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 32
+        drop_last: false
+        shuffle: true

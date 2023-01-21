@@ -1,7 +1,6 @@
-from source.classification.models import MODEL_REGISTRY
-from .detr_convnext import DETRConvnext
+from theseus.cv.detection.models import MODEL_REGISTRY
+from .detr_custom import DETRCustomBackbone
 from .faster_rcnn import FasterRCNN
-from .wrapper import ModelWithLossandPostprocess
 
-MODEL_REGISTRY.register(DETRConvnext)
+MODEL_REGISTRY.register(DETRCustomBackbone)
 MODEL_REGISTRY.register(FasterRCNN)

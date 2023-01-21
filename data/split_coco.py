@@ -1,4 +1,3 @@
-from collections import Counter
 from sklearn.preprocessing import MultiLabelBinarizer
 from skmultilearn.model_selection import IterativeStratification
 import numpy as np

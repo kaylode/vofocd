@@ -5,7 +5,6 @@
 ```
 git clone https://github.com/kaylode/vocal-folds.git
 cd vocal-folds
-pip install -r requirements.txt
 ```
 
 ## **Reproduction**
@@ -15,10 +14,17 @@ pip install -r requirements.txt
 DOCKER_BUILDKIT=1 docker build -t vocalfold:latest .
 ```
 
+- If don't want to rebuild, pull the docker with
+```
+docker pull kaylode/vocalfolds:latest
+```
+
 - Run docker image
 ```
-docker run -it --rm --gpus '"device=0"' --name vocalfold -v $(pwd):/workspace vocalfold
+docker run -it --rm --gpus '"device=0"' --name vocalfold -v $(pwd):/workspace kaylode/vocalfolds:latest
 ```
+
+- After the docker started, follow instructions in the task section below to perform training 
 
 ## Tasks
 

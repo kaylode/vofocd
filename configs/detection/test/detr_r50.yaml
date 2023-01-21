@@ -3,7 +3,7 @@ includes:
   - configs/detection/base/transform.yaml
 
 model:
-  name: DETRConvnext
+  name: DETRCustomBackbone
   args:
     model_name: detr
     backbone_name: resnet50

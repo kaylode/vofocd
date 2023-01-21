@@ -1,0 +1,13 @@
+includes:
+  - configs/classification/base/globals.yaml
+  - configs/classification/base/optimizer.yaml
+  - configs/classification/base/transform.yaml
+  - configs/classification/data/vocals.yaml
+
+model:
+  name: BaseTimmModel
+  args:
+    model_name: convnext_base
+    from_pretrained: true
+loss:
+  name: ClassificationCELoss
