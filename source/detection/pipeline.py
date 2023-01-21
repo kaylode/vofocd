@@ -2,12 +2,40 @@ import torch
 from source.detection.models import MODEL_REGISTRY
 from source.detection.datasets import DATASET_REGISTRY, DATALOADER_REGISTRY
 from source.detection.losses import LOSS_REGISTRY
-from theseus.cv.detection.pipeline import DetectionPipeline
-from theseus.base.utilities.loggers import LoggerObserver
 
+from theseus.cv.detection.pipeline import DetectionPipeline
+from theseus.opt import Config
+from theseus.base.utilities.loggers import LoggerObserver
+from theseus.base.utilities.cuda import get_devices_info
+from .models.wrapper import ModelWithIntgratedLoss
 from theseus.base.utilities.loading import load_state_dict
 
 LOGGER = LoggerObserver.getLogger('main')
+
+class DetPipelineWithIntegratedLoss(DetectionPipeline):
+    """docstring for Pipeline."""
+
+    def __init__(self, opt: Config):
+        super(DetPipelineWithIntegratedLoss, self).__init__(opt)
+        self.opt = opt
+
+    def init_registry(self):
+        super().init_registry()
+        self.model_registry = MODEL_REGISTRY
+        self.dataset_registry = DATASET_REGISTRY
+        self.dataloader_registry = DATALOADER_REGISTRY
+        self.loss_registry = LOSS_REGISTRY
+        self.logger.text("Overidding registry in pipeline...", LoggerObserver.INFO)
+
+    def init_model_with_loss(self):
+        model = self.init_model()
+        self.model = ModelWithIntgratedLoss(model, self.device)
+        self.logger.text(
+            f"Number of trainable parameters: {self.model.trainable_parameters():,}",
+            level=LoggerObserver.INFO,
+        )
+        device_info = get_devices_info(self.device_name)
+        self.logger.text("Using " + device_info, level=LoggerObserver.INFO)
 
 class DetPipeline(DetectionPipeline):
     """docstring for Pipeline."""
@@ -16,7 +44,7 @@ class DetPipeline(DetectionPipeline):
         self,
         opt
     ):
-        super(DetectionPipeline, self).__init__(opt)
+        super(DetPipeline, self).__init__(opt)
         self.opt = opt
 
     def init_registry(self):

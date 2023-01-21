@@ -3,9 +3,16 @@ import matplotlib.pyplot as plt
 mpl.use("Agg")
 
 from theseus.opt import Opts
-from source.detection.pipeline import DetPipeline
+from source.detection.pipeline import DetPipeline, DetPipelineWithIntegratedLoss
 
 if __name__ == "__main__":
     opts = Opts().parse_args()
-    train_pipeline = DetPipeline(opts)
+
+    model_name = opts['model']['args']['model_name']
+    if 'detr' in model_name:    
+        train_pipeline = DetPipeline(opts)
+    elif 'fasterrcnn' in model_name:
+        train_pipeline = DetPipelineWithIntegratedLoss(opts)
+    else:
+        raise ValueError()
     train_pipeline.fit()

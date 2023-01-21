@@ -17,7 +17,6 @@ class VocalDetectionDataset(COCODataset):
 
     def load_image(self, image_index):
         image_info = self.fns.loadImgs(self.image_ids[image_index])[0]
-
         _, image_name = image_info["file_name"].split('_')
         path = os.path.join(self.image_dir, image_name)
         image = cv2.imread(path)
