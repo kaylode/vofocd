@@ -14,6 +14,7 @@ global:
   resume: null
   weights: null
   pretrained_backbone: null # weights/kvasir_resnet50_fold0/checkpoints/best.pth
+  seed: 1702
 
 model:
   name: DETRCustomBackbone

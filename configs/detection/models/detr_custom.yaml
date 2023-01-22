@@ -14,12 +14,13 @@ global:
   resume: null
   weights: null
   pretrained_backbone: null #weights/kvasir_convnext_fold0/checkpoints/best.pth
+  seed: 1702
 
 model:
   name: DETRCustomBackbone
   args:
     model_name: detr
-    backbone_name: convnext_base
+    backbone_name: convnext_pico
     num_queries: 10
     min_conf: 0.25
     hidden_dim: 256

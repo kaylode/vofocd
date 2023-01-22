@@ -7,6 +7,7 @@ global:
   pretrained: null
   resume: null
   weights: null
+  seed: 1702
 trainer:
   name: SupervisedTrainer
   args:

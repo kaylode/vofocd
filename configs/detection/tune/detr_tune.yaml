@@ -8,7 +8,7 @@ includes:
 optimizer:
   name: AdamW
   args:
-    lr: [0.00001, 0.001]
+    lr: [0.000001, 0.001]
 scheduler: null
   # name: SchedulerWrapper
   # args:
@@ -23,7 +23,13 @@ trainer:
     clip_grad: null
     evaluate_interval: 0
     use_fp16: false
-callbacks: []
+callbacks: 
+  - name: WandbCallbacks
+    args:
+      username: kaylode
+      project_name: vocal-folds-aim
+      group_name: optuna
+      reinit: True
 
 optuna:
   float:
