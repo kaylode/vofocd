@@ -21,8 +21,9 @@ callbacks:
   - name: CheckpointCallbacks
   - name: WandbCallbacks
     args:
-      username: kaylode
-      project_name: isbi-segmentation 
+      username: hcmus-dcu
+      project_name: aim
+      group_name: segmentation
   - name: SemanticVisualizerCallbacks
 model:
   name: DETRSegmConvnext

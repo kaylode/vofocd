@@ -22,8 +22,8 @@ callbacks:
 - name: GradCAMVisualizationCallbacks
 - name: WandbCallbacks
   args:
-    username: kaylode
-    project_name: vocal-folds-aim
+    username: hcmus-dcu
+    project_name: aim
     group_name: classification
 - name: TensorboardCallbacks
 metrics:

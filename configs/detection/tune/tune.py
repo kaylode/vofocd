@@ -9,6 +9,7 @@ load_dotenv()
 if __name__ == "__main__":
     config = Config("configs/detection/tune/detr_tune.yaml")
     seed = config['global'].get('seed', 1702)
+    config['global']['exp_name'] = 'convnext_pico_optuna'
     database = os.getenv("POSTGRESQL_OPTUNA")
 
     tuner = OptunaWrapper(storage=database)

@@ -22,7 +22,7 @@ callbacks:
       std: [0,0,0]
   - name: WandbCallbacks
     args:
-      username: kaylode
-      project_name: vocal-folds-aim
+      username: hcmus-dcu
+      project_name: aim
       group_name: detection
   - name: TensorboardCallbacks
