@@ -1,7 +1,7 @@
 CONFIG_PATH=$1
 WEIGHT_PATH=$2
 FOLD_ID=$3
-EXP_NAME=detr_val
+EXP_NAME=$4
 PYTHONPATH=. python3 tools/eval_det.py \
               -c $CONFIG_PATH \
               -o global.save_dir=runs \
