@@ -51,6 +51,7 @@ class FasterRCNN(nn.Module):
             y = move_to(batch['targets'], device)
             loss_dict = self.model(x, y)
             loss = sum(loss for loss in loss_dict.values())
+            loss_dict = {k:move_to(detach(v), torch.device('cpu')) for k,v in loss_dict.items()}
             
         else:
             self.model.eval()

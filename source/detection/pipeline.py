@@ -29,6 +29,7 @@ class DetPipelineWithIntegratedLoss(DetectionPipeline):
 
     def init_model_with_loss(self):
         model = self.init_model()
+        self.criterion = -1 # a hack for logging loss, because callback won't be registered if null 
         self.model = ModelWithIntgratedLoss(model, self.device)
         self.logger.text(
             f"Number of trainable parameters: {self.model.trainable_parameters():,}",
