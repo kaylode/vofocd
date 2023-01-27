@@ -20,11 +20,11 @@ callbacks:
       order: cxcywh2xyxy
       mean: [0,0,0]
       std: [0,0,0]
-  # - name: WandbCallbacks
-  #   args:
-  #     username: kaylode
-  #     project_name: vocal-folds-aim
-  #     group_name: detection
+  - name: WandbCallbacks
+    args:
+      username: hcmus-dcu
+      project_name: aim
+      group_name: detection
   - name: TensorboardCallbacks
 
 data:
