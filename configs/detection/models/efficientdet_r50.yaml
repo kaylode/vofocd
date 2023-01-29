@@ -9,6 +9,10 @@ model:
   args:
       model_name: efficientdet
       weights: DEFAULT
+      architecture: resnet50
+      drop_path_rate: 0.2
+      soft_nms: False
+      pretrained_backbone: True
 loss: null
 
 callbacks:
@@ -20,9 +24,9 @@ callbacks:
       order: cxcywh2xyxy
       mean: [0,0,0]
       std: [0,0,0]
-  - name: WandbCallbacks
-    args:
-      username: hcmus-dcu
-      project_name: aim
-      group_name: detection
+  # - name: WandbCallbacks
+  #   args:
+  #     username: hcmus-dcu
+  #     project_name: aim
+  #     group_name: detection
   - name: TensorboardCallbacks

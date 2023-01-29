@@ -14,108 +14,99 @@ from effdet import get_efficientdet_config, EfficientDet, DetBenchTrain
 from effdet.efficientdet import HeadNet
 from effdet.config.model_config import efficientdet_model_param_dict
 
-# Dependency: pip3 install ensemble-boxes
-from ensemble_boxes import ensemble_boxes_wbf
+# # Dependency: pip3 install ensemble-boxes
+# from ensemble_boxes import ensemble_boxes_wbf
 
-def rescale_bboxes(predicted_bboxes, image_sizes, img_size):
-        scaled_bboxes = []
-        for bboxes, img_dims in zip(predicted_bboxes, image_sizes):
-            im_h, im_w = img_dims
+# def rescale_bboxes(predicted_bboxes, image_sizes, img_size):
+#         scaled_bboxes = []
+#         for bboxes, img_dims in zip(predicted_bboxes, image_sizes):
+#             im_h, im_w = img_dims
 
-            if len(bboxes) > 0:
-                scaled_bboxes.append(
-                    (
-                        np.array(bboxes)
-                        * [
-                            im_w / img_size,
-                            im_h / img_size,
-                            im_w / img_size,
-                            im_h / img_size,
-                        ]
-                    ).tolist()
-                )
-            else:
-                scaled_bboxes.append(bboxes)
+#             if len(bboxes) > 0:
+#                 scaled_bboxes.append(
+#                     (
+#                         np.array(bboxes)
+#                         * [
+#                             im_w / img_size,
+#                             im_h / img_size,
+#                             im_w / img_size,
+#                             im_h / img_size,
+#                         ]
+#                     ).tolist()
+#                 )
+#             else:
+#                 scaled_bboxes.append(bboxes)
 
-        return scaled_bboxes
+#         return scaled_bboxes
 
-def create_model(num_classes=6, image_size=512, architecture="resnet50"):
+def create_model(drop_path_rate=0.2,
+                 soft_nms=True,
+                 pretrained_backbone=True,
+                 num_classes=6, 
+                 image_size=512, 
+                 architecture="resnet50"):
     efficientdet_model_param_dict['resnet50'] = dict(
         name='resnet50',
         backbone_name='resnet50',
-        backbone_args=dict(drop_path_rate=0.2),
+        backbone_args=dict(drop_path_rate=drop_path_rate),
         num_classes=num_classes,
-        url='', )
+        url = '',
+        # url='https://download.pytorch.org/models/resnet50-11ad3fa6.pth', # IMAGENET1K_V2
+    )
     
     config = get_efficientdet_config(architecture)
     config.update({'num_classes': num_classes})
     config.update({'image_size': (image_size, image_size)})
+    config.update({'soft_nms': soft_nms})
     
-    # print(config)
+    print(10*"*", "Effdet config", 10*"*")
+    print(config)
 
-    net = EfficientDet(config, pretrained_backbone=True)
+    net = EfficientDet(config, pretrained_backbone=pretrained_backbone)
     net.class_net = HeadNet(
         config,
         num_outputs=config.num_classes,
     )
     return DetBenchTrain(net, config)
 
-def run_wbf(predictions, image_size=512, iou_thr=0.44, skip_box_thr=0.43, weights=None):
-    bboxes = []
-    confidences = []
-    class_labels = []
+# def run_wbf(predictions, image_size=512, iou_thr=0.44, skip_box_thr=0.43, weights=None):
+#     bboxes = []
+#     confidences = []
+#     class_labels = []
 
-    for prediction in predictions:
-        boxes = [(prediction["boxes"] / image_size).tolist()]
-        scores = [prediction["scores"].tolist()]
-        labels = [prediction["classes"].tolist()]
+#     for prediction in predictions:
+#         boxes = [(prediction["boxes"] / image_size).tolist()]
+#         scores = [prediction["scores"].tolist()]
+#         labels = [prediction["classes"].tolist()]
 
-        boxes, scores, labels = ensemble_boxes_wbf.weighted_boxes_fusion(
-            boxes,
-            scores,
-            labels,
-            weights=weights,
-            iou_thr=iou_thr,
-            skip_box_thr=skip_box_thr,
-        )
+#         boxes, scores, labels = ensemble_boxes_wbf.weighted_boxes_fusion(
+#             boxes,
+#             scores,
+#             labels,
+#             weights=weights,
+#             iou_thr=iou_thr,
+#             skip_box_thr=skip_box_thr,
+#         )
         
-        boxes = boxes * (image_size - 1)
-        bboxes.append(boxes.tolist())
-        confidences.append(scores.tolist())
-        class_labels.append(labels.tolist())
+#         boxes = boxes * (image_size - 1)
+#         bboxes.append(boxes.tolist())
+#         confidences.append(scores.tolist())
+#         class_labels.append(labels.tolist())
 
-    return bboxes, confidences, class_labels
+#     return bboxes, confidences, class_labels
 
 def post_process_detections(detections):
     predictions = []
-    # predictions = {
-    #     "scores":[], 
-    #     "boxes":[],
-    #     "labels":[],
-    # }
-    # outputs = [{
-    #     "scores": move_to(torch.tensor(predicted_class_confidences).float(), device),
-    #     "boxes": move_to(torch.tensor(predicted_bboxes).float(), device), 
-    #     "labels": predicted_class_labels,
-    # }]
+
     for i in range(detections.shape[0]):
-        # boxes, scores, labels = _postprocess_single_prediction_detections(detections[i])
-        # predictions["scores"].append(scores)
-        # predictions["boxes"].append(boxes)
-        # predictions["labels"].append(labels)
-        # print(labels)
         predictions.append(
             _postprocess_single_prediction_detections(detections[i])
         )
-
-    # predictions["scores"] = torch.tensor(predictions["scores"]).float()
-    # predictions["boxes"] = torch.tensor(predictions["boxes"]).float()
-    # predictions["labels"] = torch.tensor(predictions["labels"]).int()
-    # return [predictions]
-    predicted_bboxes, predicted_class_confidences, predicted_class_labels = run_wbf(
-        predictions, image_size=512, iou_thr=0.44
-    )
-    return predicted_bboxes, predicted_class_confidences, predicted_class_labels
+    return predictions
+    # predicted_bboxes, predicted_class_confidences, predicted_class_labels = run_wbf(
+    #     predictions, image_size=512, iou_thr=0.44
+    # )s
+    # return predicted_bboxes, predicted_class_confidences, predicted_class_labels
 
 def _postprocess_single_prediction_detections(detections, prediction_confidence_threshold=0.2):
     boxes = detections.detach().cpu().numpy()[:, :4]
@@ -123,8 +114,8 @@ def _postprocess_single_prediction_detections(detections, prediction_confidence_
     classes = detections.detach().cpu().numpy()[:, 5]
     indexes = np.where(scores > prediction_confidence_threshold)[0]
     boxes = boxes[indexes]
-    # return boxes, scores, classes[indexes]
-    return {"boxes": boxes, "scores": scores[indexes], "classes": classes[indexes]}
+    return boxes, scores[indexes], classes[indexes]
+    # return {"boxes": boxes, "scores": scores[indexes], "classes": classes[indexes]}
 
 def _create_dummy_inference_targets(num_images, device, img_size):
     dummy_targets = {
@@ -151,6 +142,9 @@ class EffDet(nn.Module):
         image_size: int=512,
         architecture: str="resnet50",
         classnames: Optional[List] = None,
+        drop_path_rate: float=0.2,
+        soft_nms: bool=False,
+        pretrained_backbone: bool=True,
         **kwargs
     ):
         super().__init__()
@@ -159,7 +153,13 @@ class EffDet(nn.Module):
         self.image_size = image_size
         self.architecture = architecture
         self.classnames = classnames
+        self.drop_path_rate = kwargs.get('drop_path_rate', 0.2)
+        self.soft_nms = kwargs.get('soft_nms', False)
+        self.pretrained_backbone = kwargs.get('pretrained_backbone', True)
         self.model = create_model(
+            drop_path_rate=drop_path_rate,
+            soft_nms=soft_nms,
+            pretrained_backbone=pretrained_backbone,
             num_classes=num_classes-1, 
             image_size=image_size,
             architecture=architecture
@@ -193,14 +193,11 @@ class EffDet(nn.Module):
             self.model.eval()
             y = _create_dummy_inference_targets(x.shape[0], device, self.image_size)
             outputs = self.model(x, y)['detections']
-            predicted_bboxes, predicted_class_confidences, predicted_class_labels = post_process_detections(outputs)
-            # scaled_bboxes = rescale_bboxes(
-            #     predicted_bboxes=predicted_bboxes, image_sizes=image_sizes, img_size=self.image_size
-            # )
+            predictions = post_process_detections(outputs)
             outputs = []
-            for x, y, z in zip(predicted_bboxes, predicted_class_confidences, predicted_class_labels):
+            for x, y, z in predictions:
                 outputs.append({
-                    "boxes": torch.tensor(x)[:, [1, 0, 3, 2]].float(),
+                    "boxes": torch.tensor(x).float(),
                     "scores": torch.tensor(y).float(), 
                     "labels": torch.tensor(z).int(),
                 })
