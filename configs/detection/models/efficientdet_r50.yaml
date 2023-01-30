@@ -23,7 +23,7 @@ callbacks:
     args:
       order: cxcywh2xyxy
       mean: [0,0,0]
-      std: [0,0,0]
+      std: [1,1,1]
   - name: WandbCallbacks
     args:
       username: hcmus-dcu
