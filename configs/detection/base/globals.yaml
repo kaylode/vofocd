@@ -11,7 +11,7 @@ global:
 trainer:
   name: SupervisedTrainer
   args:
-    num_iterations: 100000
+    num_iterations: 50000
     clip_grad: 0.1
     evaluate_interval: 1
     use_fp16: false
@@ -22,11 +22,14 @@ callbacks:
   - name: DetectionVisualizerCallbacks
     args:
       order: cxcywh2xyxy
+      # mean: [0.5, 0.5, 0.5]
+      # std: [0.5, 0.5, 0.5]
   - name: WandbCallbacks
     args:
       username: hcmus-dcu
       project_name: aim
       group_name: detection
+      tags: detection
   - name: TensorboardCallbacks
 metrics: 
   - name: MeanAveragePrecision

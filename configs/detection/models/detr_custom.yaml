@@ -22,7 +22,7 @@ model:
     model_name: detr
     backbone_name: convnext_pico
     num_queries: 10
-    min_conf: 0.25
+    min_conf: 0.1
     hidden_dim: 256
     position_embedding: sine
     freeze_backbone: false
