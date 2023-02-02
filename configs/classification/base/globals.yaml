@@ -25,6 +25,7 @@ callbacks:
     username: hcmus-dcu
     project_name: aim
     group_name: classification
+    tags: classification
 - name: TensorboardCallbacks
 metrics:
 - name: Accuracy
