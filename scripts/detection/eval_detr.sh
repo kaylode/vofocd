@@ -8,4 +8,4 @@ PYTHONPATH=. python3 tools/eval_det.py \
               global.exp_name=$EXP_NAME \
               global.exist_ok=False \
               global.pretrained=$WEIGHT_PATH \
-              data.dataset.val.args.label_path=data/aim/annotations/test.json
+              data.dataset.val.args.json_path=data/aim/annotations/annotation_${FOLD_ID}_val.json

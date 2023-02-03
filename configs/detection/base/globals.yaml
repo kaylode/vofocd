@@ -33,5 +33,3 @@ callbacks:
   - name: TensorboardCallbacks
 metrics: 
   - name: MeanAveragePrecision
-    args: 
-       min_iou: 0.2

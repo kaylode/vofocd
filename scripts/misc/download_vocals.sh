@@ -8,7 +8,11 @@ mkdir data/aim/annotations
 /bin/bash scripts/misc/download_from_drive.sh 1xQAONKOKHwl1UV7JngBw4eJvj2fKxywx data/aim/Train4classes.zip
 /bin/bash scripts/misc/download_from_drive.sh 1stv13UMd0N-4vPPvR5tFSosA2TofvKmQ data/aim/Train5classes.zip
 
-/bin/bash scripts/misc/download_from_drive.sh 1tV2YX7IB-1oQY538mSKNAYxkDg1cD-3S data/aim/annotation_4cls_folds.zip
+
+# Old files
+/bin/bash scripts/misc/download_from_drive.sh 1ASZEXGhqsIVJUpiJ5DuYkdBqAcMjDb0P data/aim/annotation_4cls_folds.zip
+# Train-val-test
+# /bin/bash scripts/misc/download_from_drive.sh 1tV2YX7IB-1oQY538mSKNAYxkDg1cD-3S data/aim/annotation_4cls_folds.zip
 
 unzip data/aim/Train4classes.zip -d data/aim/images
 unzip data/aim/Train5classes.zip -d data/aim/images
