@@ -1,0 +1,268 @@
+---
+# data:
+#     dataset:
+#       val:
+#         args:
+#           image_dir: data/aim/images/Train_4classes
+#           label_path: data/aim/annotations/annotation_0_val.json
+#         name: VocalDetectionDataset
+#       train:
+#         args:
+#           image_dir: data/aim/images/Train_4classes
+#           label_path: data/aim/annotations/annotation_0_train.json
+#         name: VocalDetectionDataset
+#     dataloader:
+#       val:
+#         args:
+#           shuffle: true
+#           drop_last: false
+#           batch_size: 8
+#         name: DataLoaderWithCollator
+#       train:
+#         args:
+#           shuffle: true
+#           drop_last: true
+#           batch_size: 8
+#         name: DataLoaderWithCollator
+data:
+  dataset:
+    name: ImageDataset
+    args:
+      image_dir: data/aim/images/Train_4classes
+      txt_classnames: configs/detection/data/classnames.txt
+
+  dataloader:
+    name: DataLoaderWithCollator
+    args:
+      batch_size: 8
+      drop_last: False
+      shuffle: False
+loss:
+    args:
+      loss_ce: 1
+      eos_coef: 0.1
+      cost_bbox: 5
+      cost_giou: 2
+      loss_bbox: 5
+      loss_dice:
+      loss_giou: 2
+      loss_mask:
+      cost_class: 1
+    name: DETRLosses
+model:
+    args:
+      nheads: 8
+      dropout: 0.1
+      aux_loss: true
+      dilation: false
+      min_conf: 0.1
+      pre_norm: false
+      dec_layers: 6
+      enc_layers: 6
+      hidden_dim: 256
+      model_name: detr
+      num_queries: 10
+      backbone_name: resnet18
+      dim_feedforward: 2048
+      freeze_backbone: false
+      position_embedding: sine
+    name: DETRCustomBackbone
+_wandb:
+    t:
+      '1':
+      - 1
+      - 5
+      - 41
+      - 49
+      - 53
+      - 55
+      - 63
+      - 80
+      '2':
+      - 1
+      - 5
+      - 41
+      - 49
+      - 53
+      - 55
+      - 63
+      - 80
+      '3':
+      - 3
+      - 13
+      - 14
+      - 16
+      - 23
+      '4': 3.10.8
+      '5': 0.13.3
+      '8':
+      - 5
+    framework: torch
+    start_time: 1674679518.235186
+    cli_version: 0.13.3
+    is_jupyter_run: false
+    python_version: 3.10.8
+    is_kaggle_kernel: false
+global:
+    seed: 1702
+    debug: true
+    device: cuda:0
+    resume:
+    weights:
+    exist_ok: false
+    exp_name: detr_resnet18
+    save_dir: runs
+    pretrained: weights/detr-r50-e632da11.pth
+    pretrained_backbone:
+metrics:
+  - args:
+      min_iou: 0.2
+    name: MeanAveragePrecision
+trainer:
+    args:
+      use_fp16: false
+      clip_grad: 0.1
+      num_iterations: 50000
+      evaluate_interval: 1
+    name: SupervisedTrainer
+callbacks:
+  - args:
+      best_key: f1_score
+    name: TorchCheckpointCallbacks
+  - args:
+      order: cxcywh2xyxy
+    name: DetectionVisualizerCallbacks
+  - args:
+      username: hcmus-dcu
+      group_name: detection
+      project_name: aim
+    name: WandbCallbacks
+  - name: TensorboardCallbacks
+optimizer:
+    args:
+      lr: 0.0001
+    name: AdamW
+scheduler:
+    args:
+      gamma: 0.5
+      milestones:
+      - 5000
+      - 10000
+      - 25000
+      - 40000
+      scheduler_name: multistep
+    name: SchedulerWrapper
+augmentations:
+    val:
+      args:
+        transforms:
+        - args:
+            transforms:
+            - args:
+                order: xywh2cxcywh
+              name: BoxOrder
+            - args:
+                order: cxcywh
+              name: BoxNormalize
+          name: DetCompose
+        - args:
+            transforms:
+            - args:
+                width: 480
+                height: 480
+              name: AlbResize
+            - args:
+                p: 1
+                std:
+                - 0.229
+                - 0.224
+                - 0.225
+                mean:
+                - 0.485
+                - 0.456
+                - 0.406
+                max_pixel_value: 1
+              name: AlbNormalize
+            - name: AlbToTensorV2
+            bbox_params:
+              args:
+                format: yolo
+                min_area: 0
+                label_fields:
+                - class_labels
+                min_visibility: 0
+              name: AlbBboxParams
+          name: AlbCompose
+      name: DetCompose
+    test:
+      args:
+        transforms:
+        - args:
+            width: 480
+            height: 480
+          name: AlbResize
+        - args:
+            p: 1
+            std:
+            - 0.229
+            - 0.224
+            - 0.225
+            mean:
+            - 0.485
+            - 0.456
+            - 0.406
+            max_pixel_value: 1
+          name: AlbNormalize
+        - name: AlbToTensorV2
+      name: AlbCompose
+    train:
+      args:
+        transforms:
+        - args:
+            transforms:
+            - args:
+                order: xywh2cxcywh
+              name: BoxOrder
+            - args:
+                order: cxcywh
+              name: BoxNormalize
+          name: DetCompose
+        - args:
+            transforms:
+            - args:
+                width: 480
+                height: 480
+              name: AlbResize
+            - name: AlbHorizontalFlip
+            - args:
+                scale_limit: 0.15
+                rotate_limit: 15
+              name: AlbShiftScaleRotate
+            - name: AlbGaussianBlur
+            - args:
+                contrast_limit: 0.15
+                brightness_limit: 0.15
+              name: AlbRandomBrightnessContrast
+            - args:
+                p: 1
+                std:
+                - 0.229
+                - 0.224
+                - 0.225
+                mean:
+                - 0.485
+                - 0.456
+                - 0.406
+                max_pixel_value: 1
+              name: AlbNormalize
+            - name: AlbToTensorV2
+            bbox_params:
+              args:
+                format: yolo
+                min_area: 0
+                label_fields:
+                - class_labels
+                min_visibility: 0
+              name: AlbBboxParams
+          name: AlbCompose
+      name: DetCompose
