@@ -2,9 +2,21 @@ import matplotlib as mpl
 
 mpl.use("Agg")
 from theseus.opt import Opts
-from source.detection.pipeline import DetPipeline
+from source.detection.pipeline import DetPipeline, DetPipelineWithIntegratedLoss
 
 if __name__ == "__main__":
+    # opts = Opts().parse_args()
+    # val_pipeline = DetPipeline(opts)
+    # val_pipeline.evaluate()
     opts = Opts().parse_args()
-    val_pipeline = DetPipeline(opts)
+
+    model_name = opts['model']['args']['model_name']
+    if model_name in ['detr']: 
+        print("normal")
+        val_pipeline = DetPipeline(opts)
+    elif model_name in ['faster_rcnn', 'mask_rcnn', 'efficientdet']:
+        val_pipeline = DetPipelineWithIntegratedLoss(opts)
+    else:
+        raise ValueError()
+    
     val_pipeline.evaluate()

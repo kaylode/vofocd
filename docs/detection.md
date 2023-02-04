@@ -26,3 +26,15 @@ PYTHONPATH=. python configs/detection/tune/tune.py
 ## **Resources**
 
 - Please refer to `https://github.com/kaylode/theseus/tree/v1.1.1/theseus/cv/detection` for the core framework.
+
+## YoloV5 detection training
+- Clone the YoloV5 repo and see their documentation in [here](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data)
+- Download the following [dataset](https://drive.google.com/file/d/1IEFvOGnqchbY78tRjMOXW-DitRdJEySL/view?usp=share_link), which was modified to be compatible with the Yolo format.
+- Training script example:
+```
+python train.py \
+--img 480 --batch 32 --epochs 300 \
+--data /home/htluc/datasets/aim_folds/fold_0/annotations/aim_fold_0.yaml \
+--weights yolov5s.pt \
+--name 'yolov5s_fold_0' \
+```

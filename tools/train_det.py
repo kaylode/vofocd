@@ -9,9 +9,9 @@ if __name__ == "__main__":
     opts = Opts().parse_args()
 
     model_name = opts['model']['args']['model_name']
-    if 'detr' in model_name:    
+    if model_name in ['detr']:    
         train_pipeline = DetPipeline(opts)
-    elif 'fasterrcnn' in model_name:
+    elif model_name in ['faster_rcnn', 'mask_rcnn', 'efficientdet']:
         train_pipeline = DetPipelineWithIntegratedLoss(opts)
     else:
         raise ValueError()

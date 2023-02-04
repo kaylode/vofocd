@@ -7,11 +7,11 @@ from theseus.base.utilities.cuda import move_to, detach
 from theseus.base.utilities.logits import logits2labels
 import torchvision
 from torchvision.models.resnet import ResNet50_Weights
-from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn
-from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn_v2
-from .detr_utils import box_ops
+from torchvision.models.detection import maskrcnn_resnet50_fpn
+from torchvision.models.detection import maskrcnn_resnet50_fpn_v2
+# from .detr_utils import box_ops
 
-class FasterRCNN(nn.Module):
+class MaskRCNN(nn.Module):
     """DocString"""
 
     def __init__(
@@ -29,7 +29,7 @@ class FasterRCNN(nn.Module):
         self.weights = weights
         self.classnames = classnames
         self.weights_backbone = weights_backbone
-        self.model = fasterrcnn_resnet50_fpn_v2(
+        self.model = maskrcnn_resnet50_fpn(
             num_classes=num_classes,
             weights_backbone=weights_backbone,
         )
@@ -51,7 +51,6 @@ class FasterRCNN(nn.Module):
             y = move_to(batch['targets'], device)
             loss_dict = self.model(x, y)
             loss = sum(loss for loss in loss_dict.values())
-            loss_dict = {k:move_to(detach(v), torch.device('cpu')) for k,v in loss_dict.items()}
             
         else:
             self.model.eval()
@@ -67,7 +66,7 @@ class FasterRCNN(nn.Module):
         device: `torch.device`
             current device 
         """
-        outputs, _, _ = self.forward_batch(adict, device, is_train=False)
+        outputs, _, _, _ = self.forward_batch(adict, device, is_train=False)
         batch_size = len(outputs['outputs'])
 
         results = outputs['outputs']

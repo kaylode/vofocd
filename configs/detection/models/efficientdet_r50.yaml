@@ -2,13 +2,17 @@ includes:
   - configs/detection/base/globals.yaml
   - configs/detection/base/optimizer.yaml
   - configs/detection/data/aim.yaml
-  - configs/detection/base/transform_faster_rcnn.yaml
+  - configs/detection/base/transform_efficientdet.yaml
 
 model:
-  name: FasterRCNN
+  name: EffDet
   args:
-      model_name: fasterrcnn
+      model_name: efficientdet
       weights: DEFAULT
+      architecture: resnet50
+      drop_path_rate: 0.2
+      soft_nms: False
+      pretrained_backbone: True
 loss: null
 
 callbacks:
