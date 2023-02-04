@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 def is_norm_layer(layer):
-    for norm_layer in [LayerNorm, nn.BatchNorm2d]:
+    for norm_layer in [nn.BatchNorm2d]:
         if isinstance(layer, norm_layer):
             return True
     return False

@@ -101,15 +101,15 @@ def build_backbone(
     ):
     position_embedding = build_position_encoding(hidden_dim, position_embedding)
 
-    if 'resnet' not in backbone_name:
-        backbone = CustomBackbone(backbone_name, return_interm_layers=return_interm_layers)
-    else:
-        backbone = BackboneBase(
-            backbone_name, 
-            train_backbone = not freeze_backbone,  
-            return_interm_layers = return_interm_layers, 
-            dilation = dilation
-        )
+    backbone = CustomBackbone(backbone_name, return_interm_layers=return_interm_layers)
+    # if 'resnet' not in backbone_name:
+    # else:
+    #     backbone = BackboneBase(
+    #         backbone_name, 
+    #         train_backbone = not freeze_backbone,  
+    #         return_interm_layers = return_interm_layers, 
+    #         dilation = dilation
+    #     )
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels
 
