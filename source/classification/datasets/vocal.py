@@ -34,7 +34,7 @@ class VocalClassificationDataset(ClassificationDataset):
             self.fns.append([osp.join(self.image_dir, filename), classname])
             classnames.append(classname)
         
-        self.classnames =  sorted(list(set(classnames)))
+        self.classnames = sorted(list(set(classnames)))
         self.classes_idx = {c:i for i,c in enumerate(self.classnames)}
         
     def _calculate_classes_dist(self):
