@@ -75,11 +75,11 @@ class DetPipeline(DetectionPipeline):
 
         # Freeze all norm layers of backbone
         # https://github.com/facebookresearch/detr/issues/154
-        try:
-            self.model.model.model.backbone[0].freeze_norm_layers()
-            LOGGER.text("Freezed normalization layers.", level=LoggerObserver.DEBUG)
-        except:
-            LOGGER.text("Failed to freeze normalization layers. Continue training...", level=LoggerObserver.WARN)
+        # try:
+        #     self.model.model.model.backbone[0].freeze_norm_layers()
+        #     LOGGER.text("Freezed normalization layers.", level=LoggerObserver.DEBUG)
+        # except:
+        #     LOGGER.text("Failed to freeze normalization layers. Continue training...", level=LoggerObserver.WARN)
 
         if getattr(self, "resume", None):
             state_dict = torch.load(self.resume, map_location="cpu")

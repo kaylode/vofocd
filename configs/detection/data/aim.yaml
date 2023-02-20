@@ -4,12 +4,12 @@ data:
       name: VocalDetectionDataset
       args:
         image_dir: data/aim/images/Train_4classes
-        label_path: data/aim/annotations/annotation_0_train.json
+        label_path: data/aim/annotations/aim_0_train.json
     val:
       name: VocalDetectionDataset
       args:
         image_dir: data/aim/images/Train_4classes
-        label_path: data/aim/annotations/annotation_0_val.json
+        label_path: data/aim/annotations/aim_0_val.json
   dataloader:
     train:
       name: DataLoaderWithCollator

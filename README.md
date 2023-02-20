@@ -7,6 +7,9 @@ git clone https://github.com/kaylode/vocal-folds.git
 cd vocal-folds
 ```
 
+## Data Download
+Using scripts from `scripts/misc/download_vocals.sh`
+
 ## **Reproduction**
 
 - Build docker image

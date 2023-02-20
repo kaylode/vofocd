@@ -1,7 +1,7 @@
 CONFIG_PATH=$1
 WEIGHT_PATH=$2
 FOLD_ID=$3
-EXP_NAME=cls_val
+EXP_NAME=vocal_eval
 PYTHONPATH=. python3 tools/eval_cls.py \
               -c $CONFIG_PATH \
               -o global.save_dir=runs \
