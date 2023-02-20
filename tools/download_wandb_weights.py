@@ -16,5 +16,5 @@ if __name__ == "__main__":
         filename=opt.filename,
         run_path=opt.run_path,
         save_dir=opt.save_dir,
-        rename=opt.rename
+        rename=opt.rename # File extension required
     )
