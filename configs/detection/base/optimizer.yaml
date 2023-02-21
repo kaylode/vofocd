@@ -1,13 +1,14 @@
 optimizer:
   name: AdamW
   args:
-    lr: 6.0e-05
+    lr: 1.0e-04
 scheduler:
   name: SchedulerWrapper
   args:
     scheduler_name: multistep
     milestones:
-    - 8000
+    - 5000
+    - 12500
     - 25000
     - 40000
     gamma: 0.5

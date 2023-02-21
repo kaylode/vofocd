@@ -53,6 +53,10 @@ class DETRExtractor(nn.Module):
         self.input_proj = nn.Conv2d(backbone.num_channels, self.hidden_dim, kernel_size=1)
         self.backbone = backbone
 
+    def freeze(self):
+        for p in self.parameters():
+            p.requires_grad = False
+
     def forward(self, samples: NestedTensor):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
@@ -88,6 +92,7 @@ class VOFO_DETR(nn.Module):
         clf_name: str = None, 
         clf_checkpoint: str = None,
         clf_freeze: bool = False,
+        detr_freeze: bool = False,
         detr_checkpoint: str = None,
         pooling_type: str = 'attn',
         num_heads: int = 4,
@@ -112,7 +117,7 @@ class VOFO_DETR(nn.Module):
             )
             if clf_checkpoint is not None:
                 clf_state_dict = torch.load(clf_checkpoint)['model']
-                load_state_dict(self.clf_extractor, state_dict=clf_state_dict)
+                load_state_dict(self.clf_extractor, state_dict=clf_state_dict, strict=False)
             self.global_dim = self.clf_extractor.feature_dim
         else:
             self.clf_extractor = None
@@ -121,10 +126,12 @@ class VOFO_DETR(nn.Module):
         self.local_dim = self.detr_extractor.hidden_dim
         self.num_queries = self.detr_extractor.num_queries
 
-
         if detr_checkpoint is not None:
             detr_state_dict = torch.load(detr_checkpoint)['model']
-            load_state_dict(self.detr_extractor, state_dict=detr_state_dict)
+            self.load_pretrained_detr(detr_state_dict)
+
+        if detr_freeze:
+            self.detr_extractor.freeze()
 
         if self.pooling_type == 'mean':
             self.ffn_local = nn.Linear(self.local_dim*self.num_queries, self.local_dim)
@@ -135,9 +142,16 @@ class VOFO_DETR(nn.Module):
             self.multihead_attn = nn.MultiheadAttention(
                 self.local_dim, 
                 self.num_heads,
-                kdim=self.global_dim, vdim=self.global_dim
+                kdim=49, vdim=49
             )
             self.ffn = nn.Linear(self.embed_dim, num_classes)
+
+    def load_pretrained_detr(self, state_dict):
+        def overwrite_key(state_dict):
+            for key in list(state_dict.keys()):
+                state_dict[key.replace('model.', '')] = state_dict.pop(key)
+            return state_dict
+        load_state_dict(self.detr_extractor, state_dict=overwrite_key(state_dict), strict=False)
 
     def get_model(self):
         return self
@@ -150,42 +164,46 @@ class VOFO_DETR(nn.Module):
             local_feats, (_, masks) = self.detr_extractor(x)
         else:
             local_feats, (global_feats, masks) = self.detr_extractor(x)
-            global_feats = global_feats.flatten(2).permute(2, 0, 1) # [HxW, B, Dg]      64, 32, 128
 
-        logits = self.pooling(local_feats, global_feats, masks)
-        return {
-            'outputs': logits,
-        }
-
-    def pooling(self, local_feats, global_feats, global_masks):
-        # local_feats: [hidden_state, batch, num_queries, hidden_dim1]
-        # global_feats: [batch, hidden_dim2]
         if self.pooling_type == 'attn':
-            local_feats = torch.mean(local_feats, dim=0).permute(1, 0, 2) # [Q, N, Dl]  10, 32, 256
-            
+            logits, attn_map = self.pooling(local_feats, global_feats, masks, return_attn_weights=True)
+            return {
+                'outputs': logits, 'attn_map': attn_map
+            }
+        
+        else:
+            logits = self.pooling(local_feats, global_feats)
+            return {
+                'outputs': logits,
+            }
+
+    def pooling(self, local_feats, global_feats, global_masks=None, return_attn_weights=False):
+        # local_feats: [H, B, Q, D_local]
+        # global_feats: [B, C, H, W]
+        if self.pooling_type == 'attn':
+            local_feats = torch.mean(local_feats, dim=0).permute(1, 0, 2) # [Q, B, D_local]  [10, 32, 256]
+            global_feats = global_feats.flatten(2).permute(1, 0, 2) # [C, B, HxW]      1280, 32, 64
             attn_output, attn_output_weights = self.multihead_attn(
                 query=local_feats, 
                 key=global_feats, 
                 value=global_feats,
             )
+            # [Q, B, D_local], [B, Q, HxW]
 
-            # [num_queries, batch, hidden_dim1], [batch,num_queries, 64]
             logits = self.ffn(
-                torch.mean(attn_output, dim=0)
+                torch.mean(attn_output, dim=0) # mean over bboxes
             )
+
+            if return_attn_weights:
+                return logits, attn_output_weights
 
         elif self.pooling_type == 'mean':
             batch_size = local_feats.shape[1]
             local_feats = torch.mean(local_feats, dim=0).reshape(batch_size, -1)
-
+            global_feats = torch.mean(global_feats, dim=(2, 3)).reshape(batch_size, -1)
             local_feats = self.ffn_local(local_feats)
-
-            if len(global_feats.shape) == 3:
-                global_feats = torch.mean(global_feats, dim=0)
-
             global_feats = self.ffn_global(global_feats)
             logits = self.ffn(torch.cat([global_feats, local_feats], dim=1))
-        
         else:
             raise ValueError()
 

@@ -18,14 +18,14 @@ callbacks:
 - name: TorchCheckpointCallbacks
   args:
     best_key: bl_acc
-- name: ClassificationVisualizerCallbacks
-- name: GradCAMVisualizationCallbacks
-- name: WandbCallbacks
-  args:
-    username: hcmus-dcu
-    project_name: aim
-    group_name: classification
-    tags: classification
+# - name: ClassificationVisualizerCallbacks
+# - name: GradCAMVisualizationCallbacks
+# - name: WandbCallbacks
+#   args:
+#     username: hcmus-dcu
+#     project_name: aim
+#     group_name: classification
+#     tags: ['classification', 'detection-integrated']
 - name: TensorboardCallbacks
 metrics:
 - name: Accuracy

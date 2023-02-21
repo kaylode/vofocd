@@ -41,8 +41,8 @@ augmentations:
       - name: TVResize
         args:
           size:
-          - 256
-          - 256
+          - 224
+          - 224
       - name: TVToTensor
       - name: TVNormalize
         args:

@@ -1,0 +1,73 @@
+includes:
+  - configs/detection/base/globals.yaml
+  - configs/detection/base/optimizer.yaml
+  - configs/detection/base/transform.yaml
+  - configs/detection/data/aim_vofo.yaml
+
+model:
+  name: VOFO_DETR
+  args:
+    clf_name: convnext_pico
+    detr_name: convnext_pico
+    clf_checkpoint: ./weights/picoconvnext_vocal_0/checkpoints/best.pth
+    detr_checkpoint: ./weights/8ll617vw/checkpoints/best.pth
+    clf_freeze: False
+    detr_freeze: True
+    pooling_type: attn
+    num_heads: 4
+    num_img_classes: 4
+
+    detr_num_queries: 10
+    detr_min_conf: 0.1
+    detr_hidden_dim: 256
+    detr_position_embedding: sine
+    detr_freeze_backbone: false
+    detr_dilation: false
+    detr_dropout: 0.1
+    detr_nheads: 8
+    detr_dim_feedforward: 2048
+    detr_enc_layers: 6
+    detr_dec_layers: 6
+    detr_pre_norm: false
+loss:
+  name: VOFOMultiLoss
+  args:
+    cls_loss:
+      name: ClassificationCELoss
+    detr_loss:
+      name: DETRLosses
+      args:
+        num_classes: 6
+        loss_ce: 1
+        loss_bbox: 5
+        loss_giou: 2
+        loss_mask: null
+        loss_dice: null
+        cost_class: 1
+        cost_bbox: 5
+        cost_giou: 2
+        eos_coef: 0.1
+
+metrics: 
+  - name: VOFOMetricWrapper
+    args:
+      det_metrics:
+        - name: MeanAveragePrecision
+          args:
+            min_iou: 0.2
+      cls_metrics:
+        - name: BalancedAccuracyMetric
+        - name: F1ScoreMetric
+          args:
+            average: weighted
+callbacks: 
+  - name: TorchCheckpointCallbacks
+    args:
+      best_key: mAP_0.2
+  - name: WandbCallbacks
+    args:
+      username: hcmus-dcu
+      project_name: aim
+      group_name: detection
+      tags: [detection, classification]
+  - name: TensorboardCallbacks
