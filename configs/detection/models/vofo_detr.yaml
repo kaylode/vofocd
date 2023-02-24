@@ -49,12 +49,12 @@ loss:
         eos_coef: 0.1
 
 metrics: 
-  - name: VOFOMetricWrapper
+  - name: MultiMetricWrapper
     args:
       det_metrics:
         - name: MeanAveragePrecision
           args:
-            min_iou: 0.2
+            min_iou: 0.5
       cls_metrics:
         - name: BalancedAccuracyMetric
         - name: F1ScoreMetric
@@ -63,11 +63,11 @@ metrics:
 callbacks: 
   - name: TorchCheckpointCallbacks
     args:
-      best_key: mAP_0.2
-  - name: WandbCallbacks
-    args:
-      username: hcmus-dcu
-      project_name: aim
-      group_name: detection
-      tags: [detection, classification]
-  - name: TensorboardCallbacks
+      best_key: mAP_0.5
+  # - name: WandbCallbacks
+  #   args:
+  #     username: hcmus-dcu
+  #     project_name: aim
+  #     group_name: detection
+  #     tags: [detection, classification]
+  # - name: TensorboardCallbacks

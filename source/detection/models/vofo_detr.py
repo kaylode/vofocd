@@ -10,8 +10,10 @@ from source.detection.models.detr_utils.misc import (
 from theseus.base.utilities.logits import logits2labels
 from source.detection.models.detr_components.transformer import Transformer
 from source.detection.models.detr_components.backbone import build_backbone
+from source.detection.models.detr_components.detr import MLP
 from theseus.cv.classification.models.timm_models import BaseTimmModel
 from theseus.base.utilities.loading import load_state_dict
+from .detr_components.detr import DETR, PostProcess
 
 class DETRExtractor(nn.Module):
     """ This is the DETR module that performs object detection """
@@ -53,6 +55,10 @@ class DETRExtractor(nn.Module):
         self.input_proj = nn.Conv2d(backbone.num_channels, self.hidden_dim, kernel_size=1)
         self.backbone = backbone
 
+        hidden_dim, nheads = self.transformer.d_model, self.transformer.nhead
+        self.bbox_attention = MHAttentionMap(hidden_dim, hidden_dim, nheads, dropout=0.0)
+
+
     def freeze(self):
         for p in self.parameters():
             p.requires_grad = False
@@ -78,7 +84,13 @@ class DETRExtractor(nn.Module):
         src, mask = features[-1].decompose()
 
         assert mask is not None
-        hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
+        hs, memory = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])
+        
+        # FIXME h_boxes takes the last one computed, keep this in mind
+        bbox_mask = self.bbox_attention(hs[-1], memory, mask=mask)
+        import pdb
+        pdb.set_trace()
+
         #hs shape: [hidden_state, batch, num_queries, hidden_dim]
         return hs, (src, mask)
 
@@ -86,7 +98,8 @@ class DETRExtractor(nn.Module):
 class VOFO_DETR(nn.Module):
     def __init__(
         self, 
-        num_classes,
+        num_classes: int,
+        num_img_classes,
         detr_name, 
         embed_dim: int = 256,
         clf_name: str = None, 
@@ -133,18 +146,18 @@ class VOFO_DETR(nn.Module):
         if detr_freeze:
             self.detr_extractor.freeze()
 
-        if self.pooling_type == 'mean':
-            self.ffn_local = nn.Linear(self.local_dim*self.num_queries, self.local_dim)
-            self.ffn_global = nn.Linear(self.global_dim, self.local_dim)
-            self.ffn = nn.Linear(self.local_dim*2, num_classes)
+        self.multihead_attn = nn.MultiheadAttention(
+            self.local_dim, 
+            self.num_heads,
+            kdim=225, vdim=225 # based on input shape
+        )
+        self.ffn = nn.Linear(self.embed_dim, num_img_classes)
 
-        elif self.pooling_type == 'attn':
-            self.multihead_attn = nn.MultiheadAttention(
-                self.local_dim, 
-                self.num_heads,
-                kdim=49, vdim=49
-            )
-            self.ffn = nn.Linear(self.embed_dim, num_classes)
+        # Localization error
+        self.class_embed = nn.Linear(self.local_dim, num_classes + 1)
+        self.bbox_embed = MLP(self.local_dim, self.local_dim, 4, 3)
+
+        self.postprocessor = PostProcess(min_conf=kwargs.get('detr_min_conf'))
 
     def load_pretrained_detr(self, state_dict):
         def overwrite_key(state_dict):
@@ -165,94 +178,88 @@ class VOFO_DETR(nn.Module):
         else:
             local_feats, (global_feats, masks) = self.detr_extractor(x)
 
-        if self.pooling_type == 'attn':
-            logits, attn_map = self.pooling(local_feats, global_feats, masks, return_attn_weights=True)
-            return {
-                'outputs': logits, 'attn_map': attn_map
+        logits, outputs_class, outputs_coord, attn_map = self.pooling(local_feats, global_feats, masks)
+        return {
+            'img_outputs': logits, 
+            'attn_map': attn_map, 
+            'obj_outputs': {
+                'pred_logits': outputs_class,  
+                'pred_boxes': outputs_coord
             }
-        
-        else:
-            logits = self.pooling(local_feats, global_feats)
-            return {
-                'outputs': logits,
-            }
+        }
 
-    def pooling(self, local_feats, global_feats, global_masks=None, return_attn_weights=False):
+
+    def pooling(self, local_feats, global_feats, global_masks=None):
         # local_feats: [H, B, Q, D_local]
         # global_feats: [B, C, H, W]
-        if self.pooling_type == 'attn':
-            local_feats = torch.mean(local_feats, dim=0).permute(1, 0, 2) # [Q, B, D_local]  [10, 32, 256]
-            global_feats = global_feats.flatten(2).permute(1, 0, 2) # [C, B, HxW]      1280, 32, 64
-            attn_output, attn_output_weights = self.multihead_attn(
-                query=local_feats, 
-                key=global_feats, 
-                value=global_feats,
-            )
-            # [Q, B, D_local], [B, Q, HxW]
+        local_feats = torch.mean(local_feats, dim=0).permute(1, 0, 2) # [Q, B, D_local]  [10, 32, 256]
+        global_feats = global_feats.flatten(2).permute(1, 0, 2) # [C, B, HxW]      1280, 32, 64
+        attn_output, attn_output_weights = self.multihead_attn(
+            query=local_feats, 
+            key=global_feats, 
+            value=global_feats,
+        )
+        # [Q, B, D_local], [B, Q, HxW]
 
-            logits = self.ffn(
-                torch.mean(attn_output, dim=0) # mean over bboxes
-            )
+        outputs_class = self.class_embed(attn_output) # [Q, B, num_obj+1]
+        outputs_coord = self.bbox_embed(attn_output).sigmoid() # [Q, B, 4]
 
-            if return_attn_weights:
-                return logits, attn_output_weights
+        outputs_class = outputs_class.permute(1,0,2)
+        outputs_coord = outputs_coord.permute(1,0,2)
 
-        elif self.pooling_type == 'mean':
-            batch_size = local_feats.shape[1]
-            local_feats = torch.mean(local_feats, dim=0).reshape(batch_size, -1)
-            global_feats = torch.mean(global_feats, dim=(2, 3)).reshape(batch_size, -1)
-            local_feats = self.ffn_local(local_feats)
-            global_feats = self.ffn_global(global_feats)
-            logits = self.ffn(torch.cat([global_feats, local_feats], dim=1))
-        else:
-            raise ValueError()
+        logits = self.ffn(
+            torch.mean(attn_output, dim=0) # mean over bboxes
+        )
 
-        return logits
+        return logits, outputs_class, outputs_coord, attn_output_weights
 
-    def get_prediction(self, adict: Dict[str, Any], device: torch.device):
-        """
-        Inference using the model.
+    def postprocess(self, outputs: Dict, batch: Dict):
+        batch_size = outputs['obj_outputs']['pred_logits'].shape[0]
+        target_sizes = torch.Tensor([batch['inputs'].shape[-2:]]).repeat(batch_size, 1)
 
-        adict: `Dict[str, Any]`
-            dictionary of inputs
-        device: `torch.device`
-            current device
-        """
-        outputs = self.forward_batch(adict, device)["outputs"]
+        results = self.postprocessor(
+            outputs = outputs['obj_outputs'],
+            target_sizes=target_sizes
+        )
 
-        if not adict.get("multilabel"):
-            outputs, probs = logits2labels(
-                outputs, label_type="multiclass", return_probs=True
-            )
-        else:
-            outputs, probs = logits2labels(
-                outputs,
-                label_type="multilabel",
-                threshold=adict["threshold"],
-                return_probs=True,
-            )
+        denormalized_targets = batch['obj_targets']
+        denormalized_targets = self.postprocessor(
+            outputs = denormalized_targets,
+            target_sizes=target_sizes
+        )
 
-            if adict.get("no-zeroes"):
-                argmaxs = torch.argmax(probs, dim=1)
-                tmp = torch.sum(outputs, dim=1)
-                one_hots = F.one_hot(argmaxs, outputs.shape[1])
-                outputs[tmp == 0] = one_hots[tmp == 0].bool()
+        batch['obj_targets'] = denormalized_targets
+        outputs['obj_outputs'] = results
+        return outputs, batch
+    
 
-        probs = move_to(detach(probs), torch.device("cpu")).numpy()
-        classids = move_to(detach(outputs), torch.device("cpu")).numpy()
+class MHAttentionMap(nn.Module):
+    """This is a 2D attention module, which only returns the attention softmax (no multiplication by value)"""
 
-        if self.classnames and not adict.get("multilabel"):
-            classnames = [self.classnames[int(clsid)] for clsid in classids]
-        elif self.classnames and adict.get("multilabel"):
-            classnames = [
-                [self.classnames[int(i)] for i, c in enumerate(clsid) if c]
-                for clsid in classids
-            ]
-        else:
-            classnames = []
+    def __init__(self, query_dim, hidden_dim, num_heads, dropout=0.0, bias=True):
+        super().__init__()
+        self.num_heads = num_heads
+        self.hidden_dim = hidden_dim
+        self.dropout = nn.Dropout(dropout)
 
-        return {
-            "labels": classids,
-            "confidences": probs,
-            "names": classnames,
-        }
+        self.q_linear = nn.Linear(query_dim, hidden_dim, bias=bias)
+        self.k_linear = nn.Linear(query_dim, hidden_dim, bias=bias)
+
+        nn.init.zeros_(self.k_linear.bias)
+        nn.init.zeros_(self.q_linear.bias)
+        nn.init.xavier_uniform_(self.k_linear.weight)
+        nn.init.xavier_uniform_(self.q_linear.weight)
+        self.normalize_fact = float(hidden_dim / self.num_heads) ** -0.5
+
+    def forward(self, q, k, mask: Optional[torch.Tensor] = None):
+        q = self.q_linear(q)
+        k = F.conv2d(k, self.k_linear.weight.unsqueeze(-1).unsqueeze(-1), self.k_linear.bias)
+        qh = q.view(q.shape[0], q.shape[1], self.num_heads, self.hidden_dim // self.num_heads)
+        kh = k.view(k.shape[0], self.num_heads, self.hidden_dim // self.num_heads, k.shape[-2], k.shape[-1])
+        weights = torch.einsum("bqnc,bnchw->bqnhw", qh * self.normalize_fact, kh)
+
+        if mask is not None:
+            weights.masked_fill_(mask.unsqueeze(1).unsqueeze(1), float("-inf"))
+        weights = F.softmax(weights.flatten(2), dim=-1).view(weights.size())
+        weights = self.dropout(weights)
+        return weights

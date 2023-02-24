@@ -8,8 +8,8 @@ from source.detection.pipeline import DetPipeline, DetPipelineWithIntegratedLoss
 if __name__ == "__main__":
     opts = Opts().parse_args()
 
-    model_name = opts['model']['args']['model_name']
-    if model_name in ['detr']:    
+    model_name = opts['model']['args'].get('model_name', None)
+    if model_name in ['detr', None]:    
         train_pipeline = DetPipeline(opts)
     elif model_name in ['faster_rcnn', 'mask_rcnn', 'efficientdet']:
         train_pipeline = DetPipelineWithIntegratedLoss(opts)

@@ -2,6 +2,7 @@ import torch
 from source.detection.models import MODEL_REGISTRY
 from source.detection.datasets import DATASET_REGISTRY, DATALOADER_REGISTRY
 from source.detection.losses import LOSS_REGISTRY
+from source.detection.metrics import METRIC_REGISTRY
 
 from theseus.cv.detection.pipeline import DetectionPipeline
 from theseus.opt import Config
@@ -25,6 +26,7 @@ class DetPipelineWithIntegratedLoss(DetectionPipeline):
         self.dataset_registry = DATASET_REGISTRY
         self.dataloader_registry = DATALOADER_REGISTRY
         self.loss_registry = LOSS_REGISTRY
+        self.metric_registry = METRIC_REGISTRY
         self.logger.text("Overidding registry in pipeline...", LoggerObserver.INFO)
 
     def init_model_with_loss(self):

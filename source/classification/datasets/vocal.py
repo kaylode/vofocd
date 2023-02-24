@@ -1,10 +1,6 @@
 from typing import List, Optional
 import os.path as osp
-import pandas as pd
-import os
-import cv2
 import json
-import numpy as np
 from theseus.base.utilities.loggers.observer import LoggerObserver
 from theseus.cv.classification.datasets import ClassificationDataset
 
