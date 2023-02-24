@@ -32,6 +32,7 @@ class VocalClassificationDataset(ClassificationDataset):
         
         self.classnames = sorted(list(set(classnames)))
         self.classes_idx = {c:i for i,c in enumerate(self.classnames)}
+
         
     def _calculate_classes_dist(self):
         """

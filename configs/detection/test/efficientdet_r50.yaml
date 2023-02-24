@@ -1,0 +1,49 @@
+includes:
+  - configs/detection/base/globals.yaml
+  - configs/detection/base/optimizer.yaml
+  # - configs/detection/base/transform_efficientdet.yaml
+
+augmentations:
+  train:
+    name: AlbCompose
+    args:
+      transforms:
+        - name: AlbResize
+          args:
+            width: 512
+            height: 512
+        - name: AlbToTensorV2
+  val:
+    name: AlbCompose
+    args:
+      transforms:
+        - name: AlbResize
+          args:
+            width: 512
+            height: 512
+        - name: AlbToTensorV2
+
+model:
+  name: EffDet
+  args:
+      model_name: efficientdet
+      weights: DEFAULT
+      architecture: resnet50
+      drop_path_rate: 0.2
+      soft_nms: False
+      pretrained_backbone: True
+loss: null
+
+data:
+  dataset:
+    name: ImageDataset
+    args:
+      image_dir: data/aim/images/Train_4classes
+      txt_classnames: configs/detection/data/classnames.txt
+
+  dataloader:
+    name: DataLoaderWithCollator
+    args:
+      batch_size: 8
+      drop_last: False
+      shuffle: False

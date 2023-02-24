@@ -27,7 +27,7 @@ class Infer:
         pred_txt_dir,
         gt_img_size=(480, 360), # w,h
         pred_img_size=(480, 480), # w,h
-        format="xywh",
+        pred_format="xywh",
         num_classes=6
     ):
         self.img_root= img_root
@@ -35,7 +35,7 @@ class Infer:
         self.pred_json_path = pred_json_path
         self.gt_img_size = gt_img_size
         self.pred_img_size = pred_img_size
-        self.format = format
+        self.pred_format = pred_format
         self.num_classes = num_classes
         self.gt_data, self.pred_data = self.get_gt_pred_data()
         self.wrong_instances = self.get_wrong_instances()
@@ -64,7 +64,11 @@ class Infer:
                             "bbox": []
                         }
                     
-                    _gt_data[id]['category_id'].append(np.array(annotations['category_id'], dtype=np.int32) - 1)
+                    if annotations["category_id"] - 1 not in [2, 3]:
+                        continue
+                    
+                    # _gt_data[id]['category_id'].append(annotations['category_id'] - 1)
+                    _gt_data[id]['category_id'].append(0)
                     _gt_data[id]['bbox'].append(annotations['bbox'])
         
         with open(self.pred_json_path) as json_file:
@@ -81,29 +85,30 @@ class Infer:
                 _pred_data[id]["bbox"] = np.array(_pred_data[id]["bbox"])
 
                 # Normalized and resize to gt_img_size
-                _pred_data[id]["bbox"][:, 0] = _pred_data[id]["bbox"][:, 0] / pred_x * gt_x
-                _pred_data[id]["bbox"][:, 1] = _pred_data[id]["bbox"][:, 1] / pred_y * gt_y
-                _pred_data[id]["bbox"][:, 2] = _pred_data[id]["bbox"][:, 2] / pred_x * gt_x
-                _pred_data[id]["bbox"][:, 3] = _pred_data[id]["bbox"][:, 3] / pred_y * gt_y
+                if len(_pred_data[id]["bbox"] >= 2):
+                    _pred_data[id]["bbox"][:, 0] = _pred_data[id]["bbox"][:, 0] / pred_x * gt_x
+                    _pred_data[id]["bbox"][:, 1] = _pred_data[id]["bbox"][:, 1] / pred_y * gt_y
+                    _pred_data[id]["bbox"][:, 2] = _pred_data[id]["bbox"][:, 2] / pred_x * gt_x
+                    _pred_data[id]["bbox"][:, 3] = _pred_data[id]["bbox"][:, 3] / pred_y * gt_y
                 
-                # xyxy to xywh
-                _pred_data[id]["bbox"][:, 3] = _pred_data[id]["bbox"][:, 3] - _pred_data[id]["bbox"][:, 1]
-                _pred_data[id]["bbox"][:, 2] = _pred_data[id]["bbox"][:, 2] - _pred_data[id]["bbox"][:, 0]
-                
-                _pred_data[id]["bbox"] = _pred_data[id]["bbox"].tolist()
+                    # xyxy to xywh
+                    if self.pred_format == "xyxy":
+                        _pred_data[id]["bbox"][:, 3] = _pred_data[id]["bbox"][:, 3] - _pred_data[id]["bbox"][:, 1]
+                        _pred_data[id]["bbox"][:, 2] = _pred_data[id]["bbox"][:, 2] - _pred_data[id]["bbox"][:, 0]
+                    _pred_data[id]["bbox"] = _pred_data[id]["bbox"].tolist()
 
         _gt_data = {k:v for k, v in natsorted(_gt_data.items())}
         _pred_data = {k:v for k, v in natsorted(_pred_data.items())}
         return _gt_data, _pred_data 
 
     def seek(self):
-        for k, v in self.gt_data.items():
+        for ix, (k, v) in enumerate(self.gt_data.items()):
             print(k, v)
             break
 
-        for k, v in self.gt_data.items():
+        for ix, (k, v) in enumerate(self.pred_data.items()):
             print(k, v)
-            break 
+            break
     
     def generate_gt_txt(self, out_format="xywh"):
         Path(self.gt_txt_dir).mkdir(exist_ok=True)
@@ -236,10 +241,12 @@ class Infer:
                 )
                 break
 
-    def visualize_per_image(self, img_path, cls, bbox, score=None, save_img=True, save_path="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/sbs"):
+    def visualize_per_image(self, img_path, save_path, cls, bbox, score=None, save_img=True):
         img = cv2.imread(img_path)
         if score:
             for _score, _cls, _bbox in zip(score, cls, bbox):
+                if score < 0.25:
+                    continue
                 x, y, w, h  = np.array(_bbox, dtype=np.int32)
                 x1 = x
                 y1 = y
@@ -262,14 +269,14 @@ class Infer:
                 cv2.imwrite(str(Path(save_path) / "{}_gt.png".format(Path(img_path).stem)), img)
         return img
     
-    def _visualize_side_by_side(self, gt, pred, img_path, save_path="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/sbs"):
-        gt_img = self.visualize_per_image(img_path, gt['category_id'], gt['bbox'], save_img=False)
-        pred_img = self.visualize_per_image(img_path, pred['category_id'], pred['bbox'], pred['score'], save_img=False)
+    def _visualize_side_by_side(self, gt, pred, img_path, save_path):
+        gt_img = self.visualize_per_image(img_path, save_path, gt['category_id'], gt['bbox'], save_img=False)
+        pred_img = self.visualize_per_image(img_path, save_path, pred['category_id'], pred['bbox'], pred['score'], save_img=False)
         sbs_img = np.hstack((gt_img, pred_img))
         dest = Path(save_path) / "{}.png".format(Path(img_path).stem)
         cv2.imwrite(str(dest), sbs_img)
         
-    def visualize_side_by_side(self, save_path="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/sbs"):
+    def visualize_side_by_side(self, save_path):
         Path(save_path).mkdir(exist_ok=True)
         pbar = tqdm(enumerate(zip(self.gt_data.items(), self.pred_data.items())))
         for ix, (x, y) in pbar:
@@ -284,20 +291,41 @@ class Infer:
             )
  
 def main():
+    # infer = Infer(
+    #     img_root="/home/htluc/datasets/aim_folds/fold_0/val/images",
+    #     gt_json_path="/home/htluc/datasets/aim/annotations/annotation_0_val.json",
+    #     pred_json_path="/home/htluc/vocal-folds/runs/detr_resnet18_0_infer/json/result.json",
+    #     gt_txt_dir="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/gt",
+    #     pred_txt_dir="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/pred",
+    #     gt_img_size=(480, 360),
+    #     pred_img_size=(480, 480),
+    #     pred_format="xyxy"
+    # )
+    # infer.seek()
+    # infer.visualize_side_by_side("/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/sbs")
+    # infer.summary()
+    # # !!! get_mAP will prompt to delete the save_path_folder
+    # infer.get_mAP(save_path="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/mAP_result")
+    
+    folder = "lesions_only"
+    
     infer = Infer(
         img_root="/home/htluc/datasets/aim_folds/fold_0/val/images",
         gt_json_path="/home/htluc/datasets/aim/annotations/annotation_0_val.json",
-        pred_json_path="/home/htluc/vocal-folds/runs/detr_resnet18_0_infer/json/result.json",
-        gt_txt_dir="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/gt",
-        pred_txt_dir="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/det",
+        pred_json_path="/home/htluc/yolov5/runs/val/yolov5s_lesions_fold_0_val/better.json",
+        gt_txt_dir="/home/htluc/datasets/aim_folds/infer/yolov5s_lesions/{}/gt".format(folder),
+        pred_txt_dir="/home/htluc/datasets/aim_folds/infer/yolov5s_lesions/{}/pred".format(folder),
         gt_img_size=(480, 360),
-        pred_img_size=(480, 480)
+        pred_img_size=(480, 360),
+        pred_format="xywh"
     )
     infer.seek()
-    infer.visualize_side_by_side()
+    infer.generate_gt_txt()
+    infer.generate_pred_txt()
+    # infer.visualize_side_by_side("/home/htluc/datasets/aim_folds/infer/yolov5s_lesions/{}/sbs".format(folder))
     infer.summary()
     # !!! get_mAP will prompt to delete the save_path_folder
-    infer.get_mAP(save_path="/home/htluc/datasets/aim_folds/infer/detr_resnet18_0/mAP_result") 
+    infer.get_mAP(save_path="/home/htluc/datasets/aim_folds/infer/yolov5s_lesions/{}/mAP_result".format(folder))
     
 if __name__ == "__main__":
     main()
