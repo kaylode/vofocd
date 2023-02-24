@@ -1,8 +1,8 @@
 MODEL_NAME=$1
 FOLD_ID=$2
-EXP_NAME=${MODEL_NAME}_cls
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=. python3 tools/train_cls.py \
-              -c configs/classification/models/convnext.yaml \
+EXP_NAME=${MODEL_NAME}_fold${FOLD_ID}_cls
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=. python3 tools/classification/train_cls.py \
+              -c configs/classification/models/timm_models.yaml \
               -o global.save_dir=runs \
               global.exp_name=$EXP_NAME \
               global.exist_ok=False \

@@ -1,0 +1,16 @@
+includes:
+  - configs/detection/models/effdet_r50.yaml
+
+data:
+  dataset:
+    name: ImageDataset
+    args:
+      image_dir: data/aim/images/Train_4classes
+      txt_classnames: configs/detection/data/classnames.txt
+
+  dataloader:
+    name: DataLoaderWithCollator
+    args:
+      batch_size: 8
+      drop_last: False
+      shuffle: False

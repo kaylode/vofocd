@@ -1,16 +1,5 @@
-global:
-  exp_name: null
-  exist_ok: false
-  debug: True
-  cfg_transform: configs/sample/transform.yaml
-  save_dir: runs
-  device: cuda:0
-  weights: null
-
-model:
-  name: MedTEXTeacher
-  args:
-    model_name: convnext_small
+includes:
+  - configs/models/timm_models.yaml
 
 data:
   dataset:
@@ -18,7 +7,6 @@ data:
     args:
       image_dir: data/images
       txt_classnames: configs/classification/classes.txt
-
   dataloader:
     name: DataLoaderWithCollator
     args:

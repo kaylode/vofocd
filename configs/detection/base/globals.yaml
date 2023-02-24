@@ -18,18 +18,15 @@ trainer:
 callbacks:
   - name: TorchCheckpointCallbacks
     args:
-      best_key: f1_score
+      best_key: mAP_0.5:0.95
   - name: DetectionVisualizerCallbacks
     args:
       order: cxcywh2xyxy
-      # mean: [0.5, 0.5, 0.5]
-      # std: [0.5, 0.5, 0.5]
   # - name: WandbCallbacks
   #   args:
   #     username: hcmus-dcu
   #     project_name: aim
   #     group_name: detection
   #     tags: detection
-  - name: TensorboardCallbacks
 metrics: 
   - name: MeanAveragePrecision

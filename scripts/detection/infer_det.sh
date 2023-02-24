@@ -1,6 +1,8 @@
 CONFIG_PATH=$1
 WEIGHT_PATH=$2
-PYTHONPATH=. python3 tools/infer_det.py \
+EXP_NAME=vocal_infer_det
+PYTHONPATH=. python3 tools/detection/infer_det.py \
               -c $CONFIG_PATH \
-              -o global.save_dir=runs \
-              global.weights=$WEIGHT_PATH
+              -o global.exp_name=$EXP_NAME \
+              global.exist_ok=False \
+              global.pretrained=$WEIGHT_PATH \

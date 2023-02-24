@@ -2,10 +2,10 @@ includes:
   - configs/detection/base/globals.yaml
   - configs/detection/base/optimizer.yaml
   - configs/detection/data/aim.yaml
-  - configs/detection/base/transform.yaml
+  - configs/detection/base/transforms/transform_detr.yaml
 
 global:
-  exp_name: null
+  exp_name: detr
   exist_ok: false
   debug: true
   save_dir: runs
@@ -13,7 +13,7 @@ global:
   pretrained: weights/detr-r50-e632da11.pth
   resume: null
   weights: null
-  pretrained_backbone: null #weights/kvasir_convnext_fold0/checkpoints/best.pth
+  pretrained_backbone: null
   seed: 1702
 
 model:

@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from theseus.base.utilities.cuda import move_to, detach
-from theseus.base.utilities.logits import logits2labels
 import torchvision
 from torchvision.models.resnet import ResNet50_Weights
 from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn

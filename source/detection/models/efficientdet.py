@@ -2,10 +2,7 @@ from typing import Dict, List, Any, Optional
 # import timm
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from theseus.base.utilities.cuda import move_to, detach
-from theseus.base.utilities.logits import logits2labels
-from .detr_utils import box_ops
 import numpy as np
 
 # Dependency: pip3 install effdet
