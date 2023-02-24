@@ -1,6 +1,6 @@
 FOLD_ID=$1
 EXP_NAME=vofo_pico_freezedetr
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=. python3 tools/train_det.py \
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=. python3 tools/detection/train_det.py \
               -c configs/detection/models/vofo_detr.yaml \
               -o global.save_dir=runs \
               global.exp_name=$EXP_NAME \

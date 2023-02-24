@@ -63,7 +63,7 @@ class TestPipeline(BaseTestPipeline):
             for (inpt, box, name, label, conf) in zip(
                 inputs, boxes, img_names, labels, confidences
             ):
-                img_show = visualizer.denormalize(inpt)
+                img_show = visualizer.denormalize(inpt, mean=[0,0,0], std=[1,1,1])
                 visualizer.set_image(img_show.copy())
                 visualizer.draw_bbox(box, labels=label,scores=conf)
                 savepath = os.path.join(saved_overlay_dir, name)

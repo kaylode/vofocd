@@ -65,12 +65,14 @@ class FasterRCNN(nn.Module):
             dictionary of inputs
         device: `torch.device`
             current device 
+
+        box format: xyxy
         """
         outputs, _, _ = self.forward_batch(adict, device, is_train=False)
         batch_size = len(outputs['outputs'])
 
         results = outputs['outputs']
-        
+
         scores = []
         bboxes = []
         classids = []

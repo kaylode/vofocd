@@ -7,7 +7,7 @@ import numpy as np
 
 # Dependency: pip3 install effdet
 from effdet.config.model_config import efficientdet_model_param_dict
-from effdet import get_efficientdet_config, EfficientDet, DetBenchTrain
+from effdet import get_efficientdet_config, EfficientDet, DetBenchTrain, DetBenchPredict
 from effdet.efficientdet import HeadNet
 from effdet.config.model_config import efficientdet_model_param_dict
 
@@ -41,7 +41,8 @@ def create_model(drop_path_rate=0.2,
                  pretrained_backbone=True,
                  num_classes=6, 
                  image_size=512, 
-                 architecture="resnet50"):
+                 architecture="resnet50",
+                 is_train:bool=True):
     efficientdet_model_param_dict['resnet50'] = dict(
         name='resnet50',
         backbone_name='resnet50',
@@ -64,7 +65,11 @@ def create_model(drop_path_rate=0.2,
         config,
         num_outputs=config.num_classes,
     )
-    return DetBenchTrain(net, config)
+
+    if is_train:
+        return DetBenchTrain(net)
+    else:
+        return DetBenchPredict(net)
 
 # def run_wbf(predictions, image_size=512, iou_thr=0.44, skip_box_thr=0.43, weights=None):
 #     bboxes = []
@@ -189,6 +194,20 @@ class EffDet(nn.Module):
         else:
             self.model.eval()
             y = _create_dummy_inference_targets(x.shape[0], device, self.image_size)
+
+            """
+            If errors occur, change these lines (396-398) from effdet library:
+                cls_targets_out[level_idx].append(
+                    cls_targets[count:count + steps].view([feat_size[0], feat_size[1], -1]))
+                box_targets_out[level_idx].append(
+                    box_targets[count:count + steps].view([feat_size[0], feat_size[1], -1]))
+            to 
+                cls_targets_out[level_idx].append(
+                    cls_targets[count:count + steps].reshape([feat_size[0], feat_size[1], -1]))
+                box_targets_out[level_idx].append(
+                    box_targets[count:count + steps].reshape([feat_size[0], feat_size[1], -1]))
+            """
+
             outputs = self.model(x, y)['detections']
             predictions = post_process_detections(outputs)
             outputs = []

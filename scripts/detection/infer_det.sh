@@ -5,4 +5,4 @@ PYTHONPATH=. python3 tools/detection/infer_det.py \
               -c $CONFIG_PATH \
               -o global.exp_name=$EXP_NAME \
               global.exist_ok=False \
-              global.pretrained=$WEIGHT_PATH \
+              global.weights=$WEIGHT_PATH

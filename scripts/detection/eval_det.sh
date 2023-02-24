@@ -6,4 +6,4 @@ PYTHONPATH=. python3 tools/detection/eval_det.py \
               -o global.save_dir=runs \
               global.exp_name=$EXP_NAME \
               global.exist_ok=False \
-              global.pretrained=$WEIGHT_PATH \
+              global.pretrained=$WEIGHT_PATH
