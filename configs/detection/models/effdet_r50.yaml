@@ -21,11 +21,12 @@ callbacks:
       best_key: mAP_0.5:0.95
   - name: DetectionVisualizerCallbacks
     args:
-      order: cxcywh2xyxy
+      order: null #xyxy
       mean: [0,0,0]
       std: [1,1,1]
-  # - name: WandbCallbacks
-  #   args:
-  #     username: hcmus-dcu
-  #     project_name: aim
-  #     group_name: detection
+  - name: WandbCallbacks
+    args:
+      username: hcmus-dcu
+      project_name: aim
+      group_name: detection
+      tags: ['efficientdet', 'detection']

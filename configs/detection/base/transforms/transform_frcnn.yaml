@@ -23,7 +23,18 @@ augmentations:
                 args:
                   width: 512
                   height: 512
+              - name: AlbHorizontalFlip
+              - name: AlbShiftScaleRotate
+                args:
+                  scale_limit: 0.1
+                  rotate_limit: 10
+              - name: AlbGaussianBlur
+              - name: AlbRandomBrightnessContrast
+                args:
+                  brightness_limit:     0.1
+                  contrast_limit:       0.1 
               - name: AlbToTensorV2
+
   val:
     name: DetCompose
     args:
@@ -48,16 +59,6 @@ augmentations:
                 args:
                   width: 512
                   height: 512
-              - name: AlbHorizontalFlip
-              - name: AlbShiftScaleRotate
-                args:
-                  scale_limit: 0.1
-                  rotate_limit: 10
-              - name: AlbGaussianBlur
-              - name: AlbRandomBrightnessContrast
-                args:
-                  brightness_limit:     0.1
-                  contrast_limit:       0.1 
               - name: AlbToTensorV2
 
   test:

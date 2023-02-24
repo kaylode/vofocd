@@ -15,18 +15,5 @@ trainer:
     clip_grad: 0.1
     evaluate_interval: 1
     use_fp16: false
-callbacks:
-  - name: TorchCheckpointCallbacks
-    args:
-      best_key: mAP_0.5:0.95
-  - name: DetectionVisualizerCallbacks
-    args:
-      order: cxcywh2xyxy
-  # - name: WandbCallbacks
-  #   args:
-  #     username: hcmus-dcu
-  #     project_name: aim
-  #     group_name: detection
-  #     tags: detection
 metrics: 
   - name: MeanAveragePrecision

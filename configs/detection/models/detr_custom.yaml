@@ -4,17 +4,19 @@ includes:
   - configs/detection/data/aim.yaml
   - configs/detection/base/transforms/transform_detr.yaml
 
-global:
-  exp_name: detr
-  exist_ok: false
-  debug: true
-  save_dir: runs
-  device: cuda:0
-  pretrained: weights/detr-r50-e632da11.pth
-  resume: null
-  weights: null
-  pretrained_backbone: null
-  seed: 1702
+callbacks:
+  - name: TorchCheckpointCallbacks
+    args:
+      best_key: mAP_0.5:0.95
+  - name: DetectionVisualizerCallbacks
+    args:
+      order: cxcywh2xyxy
+  - name: WandbCallbacks
+    args:
+      username: hcmus-dcu
+      project_name: aim
+      group_name: detection
+      tags: ['detr', 'detection']
 
 model:
   name: DETRCustomBackbone
