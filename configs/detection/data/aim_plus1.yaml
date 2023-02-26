@@ -1,0 +1,27 @@
+data:
+  dataset:
+    train:
+      name: VocalDetectionDataset
+      args:
+        image_dir: data/aim/images/Train_4classes
+        label_path: data/aim/annotations/aim_0_train.json
+        include_background: True
+    val:
+      name: VocalDetectionDataset
+      args:
+        image_dir: data/aim/images/Train_4classes
+        label_path: data/aim/annotations/aim_0_val.json
+        include_background: True
+  dataloader:
+    train:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 8
+        drop_last: true
+        shuffle: true
+    val:
+      name: DataLoaderWithCollator
+      args:
+        batch_size: 8
+        drop_last: false
+        shuffle: true
