@@ -15,7 +15,7 @@ callbacks:
     args:
       username: hcmus-dcu
       project_name: aim
-      group_name: detection
+      group_name: detection-tuned
       tags: ['detr', 'detection']
 
 model:
@@ -23,8 +23,8 @@ model:
   args:
     model_name: detr
     backbone_name: convnext_pico
-    num_queries: 10
-    min_conf: 0.1
+    num_queries: 64
+    min_conf: 0.2
     hidden_dim: 256
     position_embedding: sine
     freeze_backbone: false

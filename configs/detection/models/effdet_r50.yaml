@@ -1,7 +1,7 @@
 includes:
   - configs/detection/base/globals.yaml
   - configs/detection/base/optimizer.yaml
-  - configs/detection/data/aim.yaml
+  - configs/detection/data/aim_plus1.yaml
   - configs/detection/base/transforms/transform_effdet.yaml
 
 model:
@@ -13,6 +13,7 @@ model:
       drop_path_rate: 0.2
       soft_nms: False
       pretrained_backbone: True
+      min_conf: 0.1
 loss: null
 
 callbacks:
@@ -28,5 +29,5 @@ callbacks:
     args:
       username: hcmus-dcu
       project_name: aim
-      group_name: detection
+      group_name: detection-tuned
       tags: ['efficientdet', 'detection']
