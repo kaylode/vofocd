@@ -97,12 +97,12 @@ def create_model(drop_path_rate=0.2,
 
 #     return bboxes, confidences, class_labels
 
-def post_process_detections(detections):
+def post_process_detections(detections, conf_thresh=0.2):
     predictions = []
 
     for i in range(detections.shape[0]):
         predictions.append(
-            _postprocess_single_prediction_detections(detections[i])
+            _postprocess_single_prediction_detections(detections[i], prediction_confidence_threshold=conf_thresh)
         )
     return predictions
     # predicted_bboxes, predicted_class_confidences, predicted_class_labels = run_wbf(
@@ -147,6 +147,7 @@ class EffDet(nn.Module):
         drop_path_rate: float=0.2,
         soft_nms: bool=False,
         pretrained_backbone: bool=True,
+        min_conf: float=0.2,
         **kwargs
     ):
         super().__init__()
@@ -162,10 +163,11 @@ class EffDet(nn.Module):
             drop_path_rate=drop_path_rate,
             soft_nms=soft_nms,
             pretrained_backbone=pretrained_backbone,
-            num_classes=num_classes-1, 
+            num_classes=num_classes-1, # minus background class from dataset
             image_size=image_size,
             architecture=architecture
         )
+        self.min_conf = min_conf
 
     def get_model(self):
         """
@@ -209,7 +211,7 @@ class EffDet(nn.Module):
             """
 
             outputs = self.model(x, y)['detections']
-            predictions = post_process_detections(outputs)
+            predictions = post_process_detections(outputs, self.min_conf)
             outputs = []
             for x, y, z in predictions:
                 outputs.append({

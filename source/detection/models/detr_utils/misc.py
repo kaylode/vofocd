@@ -328,6 +328,16 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
         raise ValueError('not supported')
     return NestedTensor(tensor, mask)
 
+def dummy_nested_tensor(tensor: Tensor):
+    # TODO make this more general
+    
+    b, c, h, w = tensor.shape
+    device = tensor.device
+    mask = torch.ones((b, h, w), dtype=torch.bool, device=device)
+    for img, m in zip(tensor, mask):
+        m[: img.shape[1], :img.shape[2]] = False
+
+    return NestedTensor(tensor, mask)
 
 # _onnx_nested_tensor_from_tensor_list() is an implementation of
 # nested_tensor_from_tensor_list() that is supported by ONNX tracing.

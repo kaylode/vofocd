@@ -29,7 +29,7 @@ class FasterRCNN(nn.Module):
         self.classnames = classnames
         self.weights_backbone = weights_backbone
         self.model = fasterrcnn_resnet50_fpn_v2(
-            num_classes=num_classes,
+            num_classes=num_classes, # including background class from dataset
             weights_backbone=weights_backbone,
         )
 

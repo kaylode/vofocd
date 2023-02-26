@@ -8,7 +8,8 @@ from torch import nn
 
 from source.detection.models.detr_utils import box_ops
 from source.detection.models.detr_utils.misc import (
-    NestedTensor, nested_tensor_from_tensor_list
+    NestedTensor, nested_tensor_from_tensor_list,
+    dummy_nested_tensor
 )
 
 class DETR(nn.Module):
@@ -49,8 +50,11 @@ class DETR(nn.Module):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
+
         if isinstance(samples, (list, torch.Tensor)):
             samples = nested_tensor_from_tensor_list(samples)
+        elif isinstance(samples, (torch.Tensor)):
+            samples = dummy_nested_tensor(samples)
         features, pos = self.backbone(samples)
 
         src, mask = features[-1].decompose()

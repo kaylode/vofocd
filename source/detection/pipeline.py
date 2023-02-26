@@ -10,7 +10,7 @@ from theseus.base.utilities.loggers import LoggerObserver
 from theseus.base.utilities.cuda import get_devices_info
 from .models.wrapper import ModelWithIntgratedLoss
 from theseus.base.utilities.loading import load_state_dict
-
+from theseus.base.utilities.getter import get_instance
 LOGGER = LoggerObserver.getLogger('main')
 
 class DetPipelineWithIntegratedLoss(DetectionPipeline):
@@ -59,6 +59,29 @@ class DetPipeline(DetectionPipeline):
         self.logger.text(
             "Overidding registry in pipeline...", LoggerObserver.INFO
         )
+
+    def init_optimizer(self):
+        lr_backbone = self.opt['global'].get('lr_backbone', None)
+        
+        if lr_backbone is not None:
+            param_dicts = [
+                {"params": [p for n, p in self.model.model.named_parameters() if "backbone" not in n and p.requires_grad]},
+                {
+                    "params": [p for n, p in self.model.model.named_parameters() if "backbone" in n and p.requires_grad],
+                    "lr": lr_backbone,
+                },
+            ]
+            self.optimizer = get_instance(
+                self.opt["optimizer"],
+                registry=self.optimizer_registry,
+                params=param_dicts,
+            )
+        else:
+            self.optimizer = get_instance(
+                self.opt["optimizer"],
+                registry=self.optimizer_registry,
+                params=self.model.parameters(),
+            )
 
     def init_loading(self):
         self.last_epoch = -1
