@@ -29,6 +29,19 @@ class DetPipelineWithIntegratedLoss(DetectionPipeline):
         self.metric_registry = METRIC_REGISTRY
         self.logger.text("Overidding registry in pipeline...", LoggerObserver.INFO)
 
+    def init_loading(self):
+        self.last_epoch = -1
+        if getattr(self, "pretrained", None):
+            state_dict = torch.load(self.pretrained, map_location="cpu")
+            self.model.model = load_state_dict(self.model.model, state_dict, "model", strict=False)
+
+        if getattr(self, "resume", None):
+            state_dict = torch.load(self.resume, map_location="cpu")
+            self.model.model = load_state_dict(self.model.model, state_dict, "model")
+            self.optimizer = load_state_dict(self.optimizer, state_dict, "optimizer")
+            iters = load_state_dict(None, state_dict, "iters")
+            self.last_epoch = iters // len(self.train_dataloader) - 1
+               
     def init_model_with_loss(self):
         model = self.init_model()
         self.criterion = -1 # a hack for logging loss, because callback won't be registered if null 
