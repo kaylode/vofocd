@@ -22,10 +22,9 @@ augmentations:
                 min_visibility: 0
                 label_fields: ['class_labels']
             transforms:
-              - name: AlbResize
+              - name: AlbLongestMaxSize
                 args:
-                  width: 512
-                  height: 512
+                  max_size: 512
               - name: AlbHorizontalFlip
               - name: AlbShiftScaleRotate
                 args:
@@ -66,10 +65,9 @@ augmentations:
                 min_visibility: 0
                 label_fields: ['class_labels']
             transforms:
-              - name: AlbResize
+              - name: AlbLongestMaxSize
                 args:
-                  width: 512
-                  height: 512
+                  max_size: 512
               - name: AlbNormalize
                 args:
                   mean: [0.485, 0.456, 0.406]
@@ -82,10 +80,9 @@ augmentations:
     name: AlbCompose
     args:
       transforms:
-        - name: AlbResize
+        - name: AlbLongestMaxSize
           args:
-            width: 512
-            height: 512
+            max_size: 512
         - name: AlbNormalize
           args:
             mean: [0.485, 0.456, 0.406]
