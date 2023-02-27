@@ -1,0 +1,60 @@
+includes:
+  - configs/detection/base/globals.yaml
+  - configs/detection/base/optimizer.yaml
+  - configs/detection/data/aim.yaml
+  - configs/detection/base/transforms/transform_detr.yaml
+
+callbacks:
+  - name: TorchCheckpointCallbacks
+    args:
+      best_key: mAP_0.5:0.95
+  - name: DetectionVisualizerCallbacks
+    args:
+      order: cxcywh2xyxy
+  - name: WandbCallbacks
+    args:
+      username: hcmus-dcu
+      project_name: aim
+      group_name: detection-tuned
+      tags: ['dn-dab-detr', 'detection']
+
+model:
+  name: DNDABDETRCustomBackbone
+  args:
+    model_name: dndabdetr
+    backbone_name: convnext_pico
+    num_queries: 100
+    hidden_dim: 256
+    position_embedding: dab
+    freeze_backbone: false
+    dilation: false
+    dropout: 0.0
+    nheads: 8
+    dim_feedforward: 2048
+    enc_layers: 6
+    dec_layers: 6
+    pre_norm: false
+    aux_loss: true
+    transformer_activation: relu
+    random_refpoints_xy: false
+    num_select: 100
+    scalar: 5
+    num_patterns: 3
+    label_noise_scale: 0.2
+    box_noise_scale: 0.4
+loss:
+  name: DNDABDETRLosses
+  args:
+    loss_ce: 1
+    loss_bbox: 5
+    loss_giou: 2
+    loss_mask: null
+    loss_dice: null
+    cost_class: 2
+    cost_bbox: 5
+    cost_giou: 2
+    focal_alpha: 0.25
+    cls_loss_coef: 1
+    bbox_loss_coef: 5
+    giou_loss_coef: 2
+    dec_layers: 6
