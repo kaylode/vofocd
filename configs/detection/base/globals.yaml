@@ -13,7 +13,7 @@ global:
 trainer:
   name: SupervisedTrainer
   args:
-    num_iterations: 20000
+    num_iterations: 50000
     clip_grad: 0.1
     evaluate_interval: 1
     use_fp16: false
