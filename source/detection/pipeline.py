@@ -100,7 +100,7 @@ class DetPipeline(DetectionPipeline):
         self.last_epoch = -1
         if getattr(self, "pretrained", None):
             state_dict = torch.load(self.pretrained, map_location="cpu")
-            self.model.model = load_state_dict(self.model.model, state_dict, "model", strict=False)
+            self.model.model.model = load_state_dict(self.model.model.model, state_dict, "model", strict=False)
 
         pretrained_backbone = self.opt['global'].get('pretrained_backbone', None)
         if pretrained_backbone:
