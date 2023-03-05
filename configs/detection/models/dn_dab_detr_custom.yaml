@@ -11,23 +11,23 @@ callbacks:
   - name: DetectionVisualizerCallbacks
     args:
       order: cxcywh2xyxy
-  - name: WandbCallbacks
-    args:
-      username: hcmus-dcu
-      project_name: aim
-      group_name: detection-tuned
-      tags: ['dn-dab-detr', 'detection']
+  # - name: WandbCallbacks
+  #   args:
+  #     username: hcmus-dcu
+  #     project_name: aim
+  #     group_name: detection-tuned
+  #     tags: ['dn-dab-detr', 'detection']
 
 model:
   name: DNDABDETRCustomBackbone
   args:
     model_name: dndabdetr
     backbone_name: convnext_pico
-    num_queries: 100
+    num_queries: 64
     hidden_dim: 256
     position_embedding: dab
     freeze_backbone: false
-    dilation: false
+    dilation: True
     dropout: 0.0
     nheads: 8
     dim_feedforward: 2048
@@ -37,7 +37,7 @@ model:
     aux_loss: true
     transformer_activation: relu
     random_refpoints_xy: false
-    num_select: 100
+    num_select: 64
     scalar: 5
     num_patterns: 3
     label_noise_scale: 0.2
