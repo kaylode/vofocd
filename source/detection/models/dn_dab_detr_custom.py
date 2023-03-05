@@ -46,7 +46,7 @@ class DNDABDETRCustomBackbone(nn.Module):
             position_embedding=kwargs.get('position_embedding', 'dab'), 
             freeze_backbone=kwargs.get('freeze_backbone', False), 
             dilation=kwargs.get('dilation', True),
-            return_interm_layers=False
+            return_interm_layers=True
         )
         transformer = Transformer(
             d_model=kwargs.get('hidden_dim', 256),

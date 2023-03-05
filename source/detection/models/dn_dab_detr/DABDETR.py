@@ -21,13 +21,18 @@
 import math
 from typing import Dict
 import torch
+import torchvision
 import torch.nn.functional as F
 from torch import nn
-
+from collections import OrderedDict
 from source.detection.models.detr_utils import box_ops
 from source.detection.models.detr_utils.misc import (NestedTensor, nested_tensor_from_tensor_list, inverse_sigmoid)
 
 from .dn_components import prepare_for_dn, dn_post_process
+from source.detection.models.pixel_decoder.fpn import BasePixelDecoder, ShapeSpec
+from source.detection.models.dyhead.dyhead import DyHead
+from source.detection.models.dyhead.fpn import FPN
+
 
 class DABDETR(nn.Module):
     """ This is the DAB-DETR module that performs object detection """
@@ -82,7 +87,15 @@ class DABDETR(nn.Module):
             self.refpoint_embed.weight.data[:, :2] = inverse_sigmoid(self.refpoint_embed.weight.data[:, :2])
             self.refpoint_embed.weight.data[:, :2].requires_grad = False
 
-        self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
+        if backbone.return_interm_layers:
+            self.input_proj = nn.ModuleList([
+                nn.Conv2d(nc, hidden_dim, kernel_size=1) for nc in backbone.num_channels
+            ])  # [256, 512, 1024, 2048]
+            self.multi_scale=True
+            self.num_channels=backbone.num_channels
+        else:
+            self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
+
         self.backbone = backbone
         self.aux_loss = aux_loss
         self.iter_update = iter_update
@@ -106,6 +119,14 @@ class DABDETR(nn.Module):
             nn.init.constant_(self.bbox_embed.layers[-1].weight.data, 0)
             nn.init.constant_(self.bbox_embed.layers[-1].bias.data, 0)
 
+        self.pixel_decoder = FPN(
+            in_channels_list= [256, 512, 1024], 
+            out_channels = 512
+        )
+
+        self.dyhead = DyHead(
+            in_channels=512
+        )
 
     def forward(self, samples: NestedTensor, dn_args=None):
         """
@@ -128,6 +149,14 @@ class DABDETR(nn.Module):
             samples = nested_tensor_from_tensor_list(samples)
         features, pos = self.backbone(samples)
 
+        pyramids = self.pixel_decoder(
+            [f.tensors for f in features[:-1]]
+        )
+
+        dy_output = self.dyhead(pyramids)
+
+        import pdb;pdb.set_trace()
+
         src, mask = features[-1].decompose()
         assert mask is not None
         # default pipeline
@@ -136,9 +165,29 @@ class DABDETR(nn.Module):
         input_query_label, input_query_bbox, attn_mask, mask_dict = \
             prepare_for_dn(dn_args, embedweight, src.size(0), self.training, self.num_queries, self.num_classes,
                            self.hidden_dim, self.label_enc)
+        import pdb;pdb.set_trace()
 
-        hs, reference = self.transformer(self.input_proj(src), mask, input_query_bbox, pos[-1], tgt=input_query_label,
+        if self.multi_scale:
+            input_projs = []
+            masks = []
+            for i in range(len(self.num_channels)):
+                import pdb;pdb.set_trace()
+                src, mask = features[i].decompose()
+                proj = self.input_proj[i](src)
+                input_projs.append(proj)
+                masks.append(mask)
+        else:
+            input_projs = self.input_proj(src)
+            masks = mask
+                
+        # torch.Size([8, 256, 96, 128])
+        # torch.Size([8, 256, 48, 64])
+        # torch.Size([8, 256, 24, 32])
+        # torch.Size([8, 256, 24, 32])
+
+        hs, reference = self.transformer(input_projs, masks, input_query_bbox, pos[-1], tgt=input_query_label,
                                          attn_mask=attn_mask)
+                                         
         
         if not self.bbox_embed_diff_each_layer:
             reference_before_sigmoid = inverse_sigmoid(reference)

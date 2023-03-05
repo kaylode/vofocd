@@ -11,6 +11,7 @@ from typing import Dict, List
 from source.detection.models.detr_utils.misc import NestedTensor
 from .position_encoding import build_position_encoding
 from .custom_backbone import CustomBackbone
+from .swin_transformer import build_swin_transformer
 
 class FrozenBatchNorm2d(torch.nn.Module):
     """
@@ -51,12 +52,8 @@ class FrozenBatchNorm2d(torch.nn.Module):
 
 class BackboneBase(nn.Module):
 
-    def __init__(self, backbone_name: str, train_backbone: bool,  return_interm_layers: bool, dilation: bool, **kwargs):
+    def __init__(self, backbone: nn.Module, train_backbone: bool, num_channels: int, return_interm_layers: bool):
         super().__init__()
-        backbone = getattr(torchvision.models, backbone_name)(
-            replace_stride_with_dilation=[False, False, dilation],
-            pretrained=True, norm_layer=FrozenBatchNorm2d)
-        self.num_channels = 512 if backbone_name in ('resnet18', 'resnet34') else 2048
         for name, parameter in backbone.named_parameters():
             if not train_backbone or 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
                 parameter.requires_grad_(False)
@@ -64,7 +61,9 @@ class BackboneBase(nn.Module):
             return_layers = {"layer1": "0", "layer2": "1", "layer3": "2", "layer4": "3"}
         else:
             return_layers = {'layer4': "0"}
+        self.return_interm_layers =return_interm_layers
         self.body = IntermediateLayerGetter(backbone, return_layers=return_layers)
+        self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
         xs = self.body(tensor_list.tensors)
@@ -75,6 +74,28 @@ class BackboneBase(nn.Module):
             mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0]
             out[name] = NestedTensor(x, mask)
         return out
+        
+class Backbone(BackboneBase):
+    """ResNet backbone with frozen BatchNorm."""
+    def __init__(self, name: str,
+                 train_backbone: bool,
+                 return_interm_layers: bool,
+                 dilation: bool,
+                 batch_norm=FrozenBatchNorm2d):
+        if name in ['resnet18', 'resnet34', 'resnet50', 'resnet101']:
+            backbone = getattr(torchvision.models, name)(
+                replace_stride_with_dilation=[False, False, dilation],
+                pretrained=True, norm_layer=batch_norm)
+        elif name in ['swin_B_224_22k', 'swin_B_384_22k', 'swin_L_224_22k', 'swin_L_384_22k']:
+            imgsize = int(name.split('_')[-2])
+            backbone = build_swin_transformer(name, imgsize)
+
+        if return_interm_layers:
+            num_channels = [256,512,1024,2048] if name in ('resnet50') else None
+        else:
+            num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
+        super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
+
 
 class Joiner(nn.Sequential):
     def __init__(self, backbone, position_embedding):
@@ -101,8 +122,12 @@ def build_backbone(
     ):
     position_embedding = build_position_encoding(hidden_dim, position_embedding)
 
-    backbone = CustomBackbone(backbone_name, return_interm_layers=return_interm_layers)
+    if backbone_name in ['resnet18', 'resnet50']:
+        backbone = Backbone(name=backbone_name, train_backbone=not freeze_backbone, dilation=dilation, return_interm_layers=return_interm_layers)
+    else:
+        backbone = CustomBackbone(backbone_name, return_interm_layers=return_interm_layers)
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels
+    model.return_interm_layers = backbone.return_interm_layers
 
     return model

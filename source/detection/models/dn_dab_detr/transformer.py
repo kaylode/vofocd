@@ -117,11 +117,14 @@ class Transformer(nn.Module):
     def forward(self, src, mask, refpoint_embed, pos_embed, tgt, attn_mask=None):
         # flatten NxCxHxW to HWxNxC
         bs, c, h, w = src.shape
-        src = src.flatten(2).permute(2, 0, 1)
-        pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
+        src = src.flatten(2).permute(2, 0, 1) # [768, 8, 256]
+        pos_embed = pos_embed.flatten(2).permute(2, 0, 1) #[768, 8, 256]
+        #refpoint_embed [192, 8, 4]
         # refpoint_embed = refpoint_embed.unsqueeze(1).repeat(1, bs, 1)
         mask = mask.flatten(1)        
-        memory = self.encoder(src, src_key_padding_mask=mask, pos=pos_embed)
+        memory = self.encoder(src, src_key_padding_mask=mask, pos=pos_embed) #[768, 8, 256]
+
+        import pdb; pdb.set_trace()
 
         if self.num_patterns > 0:
             l = tgt.shape[0]
