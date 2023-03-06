@@ -5,7 +5,7 @@ from theseus.base.utilities.cuda import move_to, detach
 
 from .detr_components.backbone import build_backbone
 from .dn_dab_detr.DABDETR import DABDETR, PostProcess
-from .dn_dab_detr.transformer import Transformer
+from .dn_dab_detr.transformer import DyHeadTransformer
 
 class DNDABDETRCustomBackbone(nn.Module):
     """Convolution models from timm
@@ -30,6 +30,7 @@ class DNDABDETRCustomBackbone(nn.Module):
         aux_loss: bool = True,
         classnames: Optional[List] = None,
         freeze: bool = False,
+        num_image_classes: int = None,
         **kwargs
     ):
         super().__init__()
@@ -42,13 +43,11 @@ class DNDABDETRCustomBackbone(nn.Module):
         
         backbone = build_backbone(
             backbone_name, 
-            hidden_dim=kwargs.get('hidden_dim', 256), 
-            position_embedding=kwargs.get('position_embedding', 'dab'), 
             freeze_backbone=kwargs.get('freeze_backbone', False), 
             dilation=kwargs.get('dilation', True),
             return_interm_layers=True
         )
-        transformer = Transformer(
+        transformer = DyHeadTransformer(
             d_model=kwargs.get('hidden_dim', 256),
             dropout=kwargs.get('dropout', 0.0),
             nhead=kwargs.get('nheads', 8),
@@ -67,6 +66,7 @@ class DNDABDETRCustomBackbone(nn.Module):
             backbone,
             transformer,
             num_classes=num_classes,
+            num_image_classes=num_image_classes,
             num_queries=num_queries,
             aux_loss=aux_loss,
             iter_update=True,

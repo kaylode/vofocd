@@ -58,7 +58,7 @@ class BackboneBase(nn.Module):
             if not train_backbone or 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
                 parameter.requires_grad_(False)
         if return_interm_layers:
-            return_layers = {"layer1": "0", "layer2": "1", "layer3": "2", "layer4": "3"}
+            return_layers = {"layer1": "0", "layer2": "1", "layer3": "2",}# "layer4": "3"}
         else:
             return_layers = {'layer4': "0"}
         self.return_interm_layers =return_interm_layers
@@ -67,12 +67,13 @@ class BackboneBase(nn.Module):
 
     def forward(self, tensor_list: NestedTensor):
         xs = self.body(tensor_list.tensors)
-        out: Dict[str, NestedTensor] = {}
+
+        out: List[str, NestedTensor] = []
         for name, x in xs.items():
             m = tensor_list.mask
             assert m is not None
             mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0]
-            out[name] = NestedTensor(x, mask)
+            out.append(NestedTensor(x, mask))
         return out
         
 class Backbone(BackboneBase):
@@ -86,12 +87,13 @@ class Backbone(BackboneBase):
             backbone = getattr(torchvision.models, name)(
                 replace_stride_with_dilation=[False, False, dilation],
                 pretrained=True, norm_layer=batch_norm)
+            
         elif name in ['swin_B_224_22k', 'swin_B_384_22k', 'swin_L_224_22k', 'swin_L_384_22k']:
             imgsize = int(name.split('_')[-2])
             backbone = build_swin_transformer(name, imgsize)
 
         if return_interm_layers:
-            num_channels = [256,512,1024,2048] if name in ('resnet50') else None
+            num_channels = [256,512,1024] if name in ('resnet50') else None
         else:
             num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
@@ -114,20 +116,11 @@ class Joiner(nn.Sequential):
 
 def build_backbone(
         backbone_name, 
-        hidden_dim=256, 
-        position_embedding='sine', 
         freeze_backbone=False, 
         dilation=True,
         return_interm_layers=False,
     ):
-    position_embedding = build_position_encoding(hidden_dim, position_embedding)
 
-    if backbone_name in ['resnet18', 'resnet50']:
-        backbone = Backbone(name=backbone_name, train_backbone=not freeze_backbone, dilation=dilation, return_interm_layers=return_interm_layers)
-    else:
-        backbone = CustomBackbone(backbone_name, return_interm_layers=return_interm_layers)
-    model = Joiner(backbone, position_embedding)
-    model.num_channels = backbone.num_channels
-    model.return_interm_layers = backbone.return_interm_layers
+    backbone = Backbone(name=backbone_name, train_backbone=not freeze_backbone, dilation=dilation, return_interm_layers=return_interm_layers)
 
-    return model
+    return backbone

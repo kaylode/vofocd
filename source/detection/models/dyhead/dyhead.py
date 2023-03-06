@@ -1,9 +1,11 @@
+from typing import List
 import torch
 import torch.nn.functional as F
 from torch import nn
-
+import torchvision
 from .dyrelu import h_sigmoid, DYReLU
-
+from collections import OrderedDict
+from source.detection.models.detr_utils.misc import NestedTensor
 
 class Conv3x3Norm(torch.nn.Module):
     def __init__(self, in_channels, out_channels, stride):
@@ -56,16 +58,16 @@ class DyConv(nn.Module):
 
             feature = x[name]
 
-            offset_mask = self.offset(feature)
-            offset = offset_mask[:, :18, :, :]
-            mask = offset_mask[:, 18:, :, :].sigmoid()
-            conv_args = dict(offset=offset, mask=mask)
+            # offset_mask = self.offset(feature)
+            # offset = offset_mask[:, :18, :, :]
+            # mask = offset_mask[:, 18:, :, :].sigmoid()
+            # conv_args = dict(offset=offset, mask=mask)
 
-            temp_fea = [self.DyConv[1](feature, **conv_args)]
+            temp_fea = [self.DyConv[1](feature)]
             if level > 0:
-                temp_fea.append(self.DyConv[2](x[feature_names[level - 1]], **conv_args))
+                temp_fea.append(self.DyConv[2](x[feature_names[level - 1]]))
             if level < len(x) - 1:
-                temp_fea.append(F.upsample_bilinear(self.DyConv[0](x[feature_names[level + 1]], **conv_args),
+                temp_fea.append(F.upsample_bilinear(self.DyConv[0](x[feature_names[level + 1]]),
                                                     size=[feature.size(2), feature.size(3)]))
             attn_fea = []
             res_fea = []
@@ -82,14 +84,19 @@ class DyConv(nn.Module):
 
 
 class DyHead(nn.Module):
-    def __init__(self, in_channels, out_channels=256, num_convs=6):
+    def __init__(self, in_channels_list, out_channels=256, num_convs=6):
         super(DyHead, self).__init__()
 
+        self.fpn = torchvision.ops.FeaturePyramidNetwork(
+                in_channels_list=in_channels_list,
+                out_channels=out_channels,
+            )
+        
         dyhead_tower = []
         for i in range(num_convs):
             dyhead_tower.append(
                 DyConv(
-                    in_channels if i == 0 else out_channels,
+                    out_channels if i == 0 else out_channels,
                     out_channels,
                     conv_func=Conv3x3Norm,
                 )
@@ -97,7 +104,19 @@ class DyHead(nn.Module):
 
         self.dyhead_tower = nn.Sequential(*dyhead_tower)
 
-    def forward(self, x):
-        # x = self.backbone(x) assume x is extraced from backbone
+    def forward(self, features: List[NestedTensor]):
+
+        """
+        List of features
+        """
+
+        src_inputs = [i.tensors for i in features]
+        masks = [i.mask for i in features]
+
+        wrapped_features = OrderedDict()
+        for i, f in enumerate(src_inputs):
+            wrapped_features[f'feat_{i}'] = f
+
+        x = self.fpn(wrapped_features)
         dyhead_tower = self.dyhead_tower(x)
-        return dyhead_tower
+        return [NestedTensor(i, mask) for i, mask in zip(dyhead_tower.values(), masks)]

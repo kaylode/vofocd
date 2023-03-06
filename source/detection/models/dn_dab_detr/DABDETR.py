@@ -21,18 +21,14 @@
 import math
 from typing import Dict
 import torch
-import torchvision
 import torch.nn.functional as F
 from torch import nn
-from collections import OrderedDict
 from source.detection.models.detr_utils import box_ops
 from source.detection.models.detr_utils.misc import (NestedTensor, nested_tensor_from_tensor_list, inverse_sigmoid)
 
 from .dn_components import prepare_for_dn, dn_post_process
-from source.detection.models.pixel_decoder.fpn import BasePixelDecoder, ShapeSpec
 from source.detection.models.dyhead.dyhead import DyHead
-from source.detection.models.dyhead.fpn import FPN
-
+from source.detection.models.dyhead2.dyhead import FPNDyHead
 
 class DABDETR(nn.Module):
     """ This is the DAB-DETR module that performs object detection """
@@ -42,6 +38,7 @@ class DABDETR(nn.Module):
                     query_dim=4, 
                     bbox_embed_diff_each_layer=False,
                     random_refpoints_xy=False,
+                    num_image_classes = None
                     ):
         """ Initializes the model.
         Parameters:
@@ -87,21 +84,13 @@ class DABDETR(nn.Module):
             self.refpoint_embed.weight.data[:, :2] = inverse_sigmoid(self.refpoint_embed.weight.data[:, :2])
             self.refpoint_embed.weight.data[:, :2].requires_grad = False
 
-        if backbone.return_interm_layers:
-            self.input_proj = nn.ModuleList([
-                nn.Conv2d(nc, hidden_dim, kernel_size=1) for nc in backbone.num_channels
-            ])  # [256, 512, 1024, 2048]
-            self.multi_scale=True
-            self.num_channels=backbone.num_channels
-        else:
-            self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
-
         self.backbone = backbone
         self.aux_loss = aux_loss
         self.iter_update = iter_update
 
         if self.iter_update:
             self.transformer.decoder.bbox_embed = self.bbox_embed
+            self.transformer.decoder.class_embed = self.class_embed
 
 
         # init prior_prob setting for focal loss
@@ -119,14 +108,31 @@ class DABDETR(nn.Module):
             nn.init.constant_(self.bbox_embed.layers[-1].weight.data, 0)
             nn.init.constant_(self.bbox_embed.layers[-1].bias.data, 0)
 
-        self.pixel_decoder = FPN(
-            in_channels_list= [256, 512, 1024], 
-            out_channels = 512
+        self.dyhead = DyHead(
+            in_channels_list=self.backbone.num_channels,
+            out_channels=self.hidden_dim,
+            num_convs=3
         )
 
-        self.dyhead = DyHead(
-            in_channels=512
-        )
+        # self.dyhead = FPNDyHead(
+        #     S=60*60, # median shape of resnet+fpn layers (temporaly hardcoded)
+        #     num_blocks=3,
+        #     fpn_returned_layers=[1,2,3]
+        # )
+
+        self.num_image_classes = num_image_classes
+        if self.num_image_classes is not None:
+            self.pooling = torch.nn.Sequential(
+                nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten()
+            )
+
+            self.global_classifier = nn.Sequential(
+                nn.Dropout(p=0.2),
+                nn.Linear(
+                    in_features=self.hidden_dim, 
+                    out_features=self.num_image_classes
+                )
+            )
 
     def forward(self, samples: NestedTensor, dn_args=None):
         """
@@ -145,66 +151,32 @@ class DABDETR(nn.Module):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
+        
         if isinstance(samples, (list, torch.Tensor)):
             samples = nested_tensor_from_tensor_list(samples)
-        features, pos = self.backbone(samples)
 
-        pyramids = self.pixel_decoder(
-            [f.tensors for f in features[:-1]]
-        )
-
-        dy_output = self.dyhead(pyramids)
-
-        import pdb;pdb.set_trace()
-
+        features = self.backbone(samples)
         src, mask = features[-1].decompose()
-        assert mask is not None
+
+        bs = src.shape[0]
+        dy_feats = self.dyhead(features)
+
+        if self.num_image_classes is not None:
+            last_fmap = dy_feats[:, -1].tensors
+            pooled_outputs = self.pooling(last_fmap)
+            global_outputs = self.global_classifier(pooled_outputs)
+
         # default pipeline
         embedweight = self.refpoint_embed.weight
+
         # prepare for dn
         input_query_label, input_query_bbox, attn_mask, mask_dict = \
-            prepare_for_dn(dn_args, embedweight, src.size(0), self.training, self.num_queries, self.num_classes,
+            prepare_for_dn(dn_args, embedweight, bs, self.training, self.num_queries, self.num_classes,
                            self.hidden_dim, self.label_enc)
-        import pdb;pdb.set_trace()
 
-        if self.multi_scale:
-            input_projs = []
-            masks = []
-            for i in range(len(self.num_channels)):
-                import pdb;pdb.set_trace()
-                src, mask = features[i].decompose()
-                proj = self.input_proj[i](src)
-                input_projs.append(proj)
-                masks.append(mask)
-        else:
-            input_projs = self.input_proj(src)
-            masks = mask
-                
-        # torch.Size([8, 256, 96, 128])
-        # torch.Size([8, 256, 48, 64])
-        # torch.Size([8, 256, 24, 32])
-        # torch.Size([8, 256, 24, 32])
-
-        hs, reference = self.transformer(input_projs, masks, input_query_bbox, pos[-1], tgt=input_query_label,
+        outputs_class, outputs_coord = self.transformer(dy_feats, input_query_bbox, tgt=input_query_label,
                                          attn_mask=attn_mask)
                                          
-        
-        if not self.bbox_embed_diff_each_layer:
-            reference_before_sigmoid = inverse_sigmoid(reference)
-            tmp = self.bbox_embed(hs)
-            tmp[..., :self.query_dim] += reference_before_sigmoid
-            outputs_coord = tmp.sigmoid()
-        else:
-            reference_before_sigmoid = inverse_sigmoid(reference)
-            outputs_coords = []
-            for lvl in range(hs.shape[0]):
-                tmp = self.bbox_embed[lvl](hs[lvl])
-                tmp[..., :self.query_dim] += reference_before_sigmoid[lvl]
-                outputs_coord = tmp.sigmoid()
-                outputs_coords.append(outputs_coord)
-            outputs_coord = torch.stack(outputs_coords)
-
-        outputs_class = self.class_embed(hs)
         # dn post process
         outputs_class, outputs_coord = dn_post_process(outputs_class, outputs_coord, mask_dict)
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
@@ -244,7 +216,7 @@ class PostProcess(nn.Module):
             assert target_sizes.shape[1] == 2
 
             prob = out_logits.sigmoid()
-            topk_values, topk_indexes = torch.topk(prob.view(out_logits.shape[0], -1), num_select, dim=1)
+            topk_values, topk_indexes = torch.topk(prob.reshape(out_logits.shape[0], -1), num_select, dim=1)
             scores = topk_values
             topk_boxes = topk_indexes // out_logits.shape[2]
             labels = topk_indexes % out_logits.shape[2]
