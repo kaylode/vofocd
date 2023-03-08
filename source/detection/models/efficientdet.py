@@ -11,30 +11,7 @@ from effdet import get_efficientdet_config, EfficientDet, DetBenchTrain, DetBenc
 from effdet.efficientdet import HeadNet
 from effdet.config.model_config import efficientdet_model_param_dict
 
-# # Dependency: pip3 install ensemble-boxes
-# from ensemble_boxes import ensemble_boxes_wbf
-
-# def rescale_bboxes(predicted_bboxes, image_sizes, img_size):
-#         scaled_bboxes = []
-#         for bboxes, img_dims in zip(predicted_bboxes, image_sizes):
-#             im_h, im_w = img_dims
-
-#             if len(bboxes) > 0:
-#                 scaled_bboxes.append(
-#                     (
-#                         np.array(bboxes)
-#                         * [
-#                             im_w / img_size,
-#                             im_h / img_size,
-#                             im_w / img_size,
-#                             im_h / img_size,
-#                         ]
-#                     ).tolist()
-#                 )
-#             else:
-#                 scaled_bboxes.append(bboxes)
-
-#         return scaled_bboxes
+from theseus.cv.detection.utilities import fusion
 
 def create_model(drop_path_rate=0.2,
                  soft_nms=True,
@@ -71,53 +48,36 @@ def create_model(drop_path_rate=0.2,
     else:
         return DetBenchPredict(net)
 
-# def run_wbf(predictions, image_size=512, iou_thr=0.44, skip_box_thr=0.43, weights=None):
-#     bboxes = []
-#     confidences = []
-#     class_labels = []
-
-#     for prediction in predictions:
-#         boxes = [(prediction["boxes"] / image_size).tolist()]
-#         scores = [prediction["scores"].tolist()]
-#         labels = [prediction["classes"].tolist()]
-
-#         boxes, scores, labels = ensemble_boxes_wbf.weighted_boxes_fusion(
-#             boxes,
-#             scores,
-#             labels,
-#             weights=weights,
-#             iou_thr=iou_thr,
-#             skip_box_thr=skip_box_thr,
-#         )
-        
-#         boxes = boxes * (image_size - 1)
-#         bboxes.append(boxes.tolist())
-#         confidences.append(scores.tolist())
-#         class_labels.append(labels.tolist())
-
-#     return bboxes, confidences, class_labels
-
-def post_process_detections(detections, conf_thresh=0.2):
+def post_process_detections(detections, iou_thresh=0.5, conf_thresh=0.2, image_shape=None):
     predictions = []
 
     for i in range(detections.shape[0]):
         predictions.append(
-            _postprocess_single_prediction_detections(detections[i], prediction_confidence_threshold=conf_thresh)
+            _postprocess_single_prediction_detections(detections[i], iou_threshold=iou_thresh, confidence_threshold=conf_thresh, image_shape=image_shape)
         )
     return predictions
-    # predicted_bboxes, predicted_class_confidences, predicted_class_labels = run_wbf(
-    #     predictions, image_size=512, iou_thr=0.44
-    # )s
-    # return predicted_bboxes, predicted_class_confidences, predicted_class_labels
-
-def _postprocess_single_prediction_detections(detections, prediction_confidence_threshold=0.2):
+  
+def _postprocess_single_prediction_detections(detections, iou_threshold=0.5, confidence_threshold=0.2, image_shape=None):
     boxes = detections.detach().cpu().numpy()[:, :4]
     scores = detections.detach().cpu().numpy()[:, 4]
     classes = detections.detach().cpu().numpy()[:, 5]
-    indexes = np.where(scores > prediction_confidence_threshold)[0]
+    
+    indexes = np.where(scores > confidence_threshold)[0]
     boxes = boxes[indexes]
-    return boxes, scores[indexes], classes[indexes]
-    # return {"boxes": boxes, "scores": scores[indexes], "classes": classes[indexes]}
+    scores = scores[indexes]
+    classes = classes[indexes]
+    
+    fused_boxes, fused_scores, fused_classes = fusion.box_fusion(
+        [boxes],
+        [scores],
+        [classes],
+        mode="wbf",
+        image_size=image_shape,
+        weights=None,
+        iou_threshold=iou_threshold,
+    )
+    
+    return  fused_boxes, fused_scores, fused_classes
 
 def _create_dummy_inference_targets(num_images, device, img_size):
     dummy_targets = {
@@ -148,6 +108,7 @@ class EffDet(nn.Module):
         soft_nms: bool=False,
         pretrained_backbone: bool=True,
         min_conf: float=0.2,
+        min_iou: float=0.2,
         **kwargs
     ):
         super().__init__()
@@ -168,6 +129,7 @@ class EffDet(nn.Module):
             architecture=architecture
         )
         self.min_conf = min_conf
+        self.min_iou = min_iou
 
     def get_model(self):
         """
@@ -211,7 +173,7 @@ class EffDet(nn.Module):
             """
 
             outputs = self.model(x, y)['detections']
-            predictions = post_process_detections(outputs, self.min_conf)
+            predictions = post_process_detections(outputs, self.min_iou, self.min_conf, image_shape=x.shape[-2:])
             outputs = []
             for x, y, z in predictions:
                 outputs.append({

@@ -160,7 +160,7 @@ class SetCriterion(nn.Module):
              return_indices: used for vis. if True, the layer0-5 indices will be returned as well.
 
         """
-
+        
         outputs_without_aux = {k: v for k, v in outputs.items() if k != 'aux_outputs'}
 
         # Retrieve the matching between the outputs of the last layer and the targets

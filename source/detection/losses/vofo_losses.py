@@ -18,14 +18,14 @@ class VOFOMultiLoss(nn.Module):
     ):
         
         global_loss, global_loss_dict = self.cls_loss(
-            outputs={'outputs': outputs["img_outputs"]},
-            batch={'targets': batch["img_targets"]},
+            outputs=outputs["img_outputs"],
+            batch=batch["img_targets"],
             device=device
         )
 
         local_loss, local_loss_dict = self.detr_loss(
-            outputs={'outputs': outputs["obj_outputs"]},
-            batch={'targets': batch["obj_targets"]},
+            outputs=outputs["obj_outputs"],
+            batch=batch["obj_targets"],
             device=device
         )
 

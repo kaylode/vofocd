@@ -7,17 +7,19 @@ import json
 import cv2
 import numpy as np
 from pycocotools.coco import COCO
-from theseus.cv.detection.datasets.coco import COCODataset
+from .vocal_mask import VocalMaskDataset
 
-class VocalMultiDataset(COCODataset):
+class VocalMultiDataset(VocalMaskDataset):
     def __init__(
         self,
         image_dir: str,
         label_path: str,
         transform: Optional[List] = None,
+        include_background: bool = False,
+        binary_thresholding: float = 0, # 1.0 means not used
         **kwargs
     ):
-        super().__init__(image_dir, label_path, transform, **kwargs)
+        super().__init__(image_dir, label_path, transform, include_background, binary_thresholding, **kwargs)
 
     def _load_data(self):
         self.fns = COCO(self.label_path)
@@ -101,6 +103,8 @@ class VocalMultiDataset(COCODataset):
 
         if len(boxes) == 0:
             return self.__getitem__((idx + 1) % len(self.image_ids))
+        
+        bin_mask = self.create_mask_version(image, threshold= self.binary_thresholding)
 
         labels = torch.LongTensor(labels)  # starts from 1
         img_label = torch.LongTensor([img_class_idx])
@@ -117,6 +121,7 @@ class VocalMultiDataset(COCODataset):
             "img_id": img_id,
             "img_name": img_name,
             "ori_size": [ori_width, ori_height],
+            'bin_mask': bin_mask
         }
     
     def collate_fn(self, batch):
@@ -126,15 +131,14 @@ class VocalMultiDataset(COCODataset):
         img_ids = [s["img_id"] for s in batch]
         img_names = [s["img_name"] for s in batch]
         ori_sizes = [s["ori_size"] for s in batch]
+        bin_masks = torch.stack([s["bin_mask"] for s in batch])
 
         return {
             "inputs": imgs,
-            "obj_targets": targets,
-            "img_targets": img_targets,
+            "obj_targets": {'targets': targets},
+            "img_targets": {'targets': img_targets},
             "img_ids": img_ids,
             "img_names": img_names,
             "ori_sizes": ori_sizes,
+            "bin_masks": bin_masks,
         }
-
-    def __len__(self) -> int:
-        return len(self.image_ids)

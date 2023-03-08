@@ -45,7 +45,7 @@ class FPNDyHead(nn.Module):
             ) for i in range(num_blocks)
         ]))
 
-    def concat_feature_maps(self, fpn_output):
+    def concat_feature_maps(self, fpn_output, masks=None):
         # Calculating median height to upsample or desample each fpn levels
         heights = []
         level_tensors = []
@@ -53,17 +53,17 @@ class FPNDyHead(nn.Module):
             if key != 'pool':
                 heights.append(values.shape[2])
                 level_tensors.append(values)
-        median_height = int(np.median(heights))
+        self.median_height = int(np.median(heights))
 
         # Upsample and Desampling tensors to median height and width
         for i in range(len(level_tensors)):
             level = level_tensors[i]
             # If level height is greater than median, then downsample with interpolate
-            if level.shape[2] > median_height:
-                level = F.interpolate(input=level, size=(median_height, median_height),mode='nearest')
+            if level.shape[2] > self.median_height:
+                level = F.interpolate(input=level, size=(self.median_height, self.median_height),mode='nearest')
             # If level height is less than median, then upsample
             else:
-                level = F.interpolate(input=level, size=(median_height, median_height), mode='nearest')
+                level = F.interpolate(input=level, size=(self.median_height, self.median_height), mode='nearest')
             level_tensors[i] = level
         
         # Concating all levels with dimensions (batch_size, levels, C, H, W)
@@ -71,13 +71,30 @@ class FPNDyHead(nn.Module):
 
         # Reshaping tensor from (batch_size, levels, C, H, W) to (batch_size, levels, HxW=S, C)
         concat_levels = concat_levels.flatten(start_dim=3).transpose(dim0=2, dim1=3)
+
+        # Reshaping mask
+        if masks is not None:
+            masks = F.interpolate(masks.unsqueeze(1).float(), size=(self.median_height,self.median_height)).to(torch.bool)
+            masks = masks.repeat(1,len(level_tensors), 1, 1)
+            return concat_levels, masks
+
         return concat_levels
     
     def forward(self, samples: NestedTensor):
         device = samples.tensors.device
+        masks = samples.mask
         fpn_outputs = self.backbone(samples.tensors)
-        F_tensor = self.concat_feature_maps(fpn_outputs)
-        F_tensor = F_tensor.to(device)
+        F_tensor, F_mask = self.concat_feature_maps(fpn_outputs, masks)
+        F_tensor, F_mask = F_tensor.to(device), F_mask.to(device)
         dy_outputs = self.dy_blocks(F_tensor)
+        
 
-        return dy_outputs
+        bs, L, S, C = dy_outputs.shape
+        w = h = self.median_height
+        dy_outputs = [
+            f for f in dy_outputs.permute(1, 0, 3, 2).view(L, bs, C, h, w)
+        ]
+
+        F_mask = F_mask.permute(1,0,2,3)
+
+        return [NestedTensor(dy, mask) for dy, mask in zip(dy_outputs, F_mask)]

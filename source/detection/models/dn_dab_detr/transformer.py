@@ -88,7 +88,7 @@ def gen_sineembed_for_position(pos_tensor):
 
 class DyHeadTransformer(nn.Module):
 
-    def __init__(self, d_model=512, nhead=8, num_queries=300, num_encoder_layers=6,
+    def __init__(self, d_model=512, nhead=8, num_queries=300,
                  num_decoder_layers=6, dim_feedforward=2048, dropout=0.1,
                  activation="relu", normalize_before=False,
                  return_intermediate_dec=False, query_dim=4,
@@ -96,11 +96,13 @@ class DyHeadTransformer(nn.Module):
                  num_patterns=0,
                  modulate_hw_attn=True,
                  bbox_embed_diff_each_layer=False,
+                 bbox_mask_attn: bool = False
                  ):
 
         super().__init__()
         self.num_feature_levels = 3
         self.hidden_dim=256
+        self.bbox_mask_attn = bbox_mask_attn
 
         decoder_layer = TransformerDecoderLayer(d_model, nhead, dim_feedforward,
                                                 dropout, activation, normalize_before, keep_query_pos=keep_query_pos)
@@ -110,7 +112,8 @@ class DyHeadTransformer(nn.Module):
                                           d_model=d_model, query_dim=query_dim, keep_query_pos=keep_query_pos, query_scale_type=query_scale_type,
                                           modulate_hw_attn=modulate_hw_attn,
                                           bbox_embed_diff_each_layer=bbox_embed_diff_each_layer,
-                                          num_feature_levels=self.num_feature_levels)
+                                          num_feature_levels=self.num_feature_levels,
+                                          bbox_mask_attn=bbox_mask_attn)
 
         self._reset_parameters()
         assert query_scale_type in ['cond_elewise', 'cond_scalar', 'fix_elewise']
@@ -179,7 +182,8 @@ class TransformerDecoder(nn.Module):
                     d_model=256, query_dim=2, keep_query_pos=False, query_scale_type='cond_elewise',
                     modulate_hw_attn=False,
                     bbox_embed_diff_each_layer=False,
-                    num_feature_levels = 3
+                    num_feature_levels = 3,
+                    bbox_mask_attn: bool = False
                     ):
         super().__init__()
         self.layers = _get_clones(decoder_layer, num_layers)
@@ -190,6 +194,7 @@ class TransformerDecoder(nn.Module):
         self.return_intermediate = return_intermediate
         assert return_intermediate
         self.query_dim = query_dim
+        self.bbox_mask_attn = bbox_mask_attn
 
         assert query_scale_type in ['cond_elewise', 'cond_scalar', 'fix_elewise']
         self.query_scale_type = query_scale_type
@@ -310,11 +315,14 @@ class TransformerDecoder(nn.Module):
             memory_key_padding_mask = memory_key_padding_masks[level_index]
             pos = poss[level_index]
 
-            attn_mask = self.generate_att_mask_from_refpoints(
-                reference_points.detach(),
-                class_logits.detach(),
-                attn_mask_target_size=attn_mask_target_sizes[level_index]
-            )
+            if self.bbox_mask_attn:
+                attn_mask = self.generate_att_mask_from_refpoints(
+                    reference_points.detach(),
+                    class_logits.detach(),
+                    attn_mask_target_size=attn_mask_target_sizes[level_index]
+                )
+            else:
+                attn_mask = None
 
             obj_center = reference_points[..., :self.query_dim]     # [num_queries, batch_size, 4]
 

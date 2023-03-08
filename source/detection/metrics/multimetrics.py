@@ -15,15 +15,12 @@ class MultiMetricWrapper(Metric):
             metric.reset()
     
     def update(self, output, batch):
-
         for metric in self.cls_metrics:
             metric.update(
-                outputs={
-                    'outputs': output['img_outputs']
-                }, 
+                outputs=output['img_outputs'], 
                 batch={
                     'inputs': batch['inputs'],
-                    'targets': batch['img_targets']
+                    **batch['img_targets']
                 }, 
             )
 
@@ -34,7 +31,7 @@ class MultiMetricWrapper(Metric):
                     'img_ids': batch['img_ids'], 
                     'img_names': batch['img_names'], 
                     'inputs': batch['inputs'],
-                    'targets': batch['obj_targets']
+                    **batch['obj_targets']
                 }, 
             )
 

@@ -108,17 +108,17 @@ class DABDETR(nn.Module):
             nn.init.constant_(self.bbox_embed.layers[-1].weight.data, 0)
             nn.init.constant_(self.bbox_embed.layers[-1].bias.data, 0)
 
-        self.dyhead = DyHead(
-            in_channels_list=self.backbone.num_channels,
-            out_channels=self.hidden_dim,
-            num_convs=3
-        )
-
-        # self.dyhead = FPNDyHead(
-        #     S=60*60, # median shape of resnet+fpn layers (temporaly hardcoded)
-        #     num_blocks=3,
-        #     fpn_returned_layers=[1,2,3]
+        # self.dyhead = DyHead(
+        #     in_channels_list=self.backbone.num_channels,
+        #     out_channels=self.hidden_dim,
+        #     num_convs=3
         # )
+
+        self.dyhead = FPNDyHead(
+            S=60*60, # median shape of resnet+fpn layers (temporaly hardcoded)
+            num_blocks=3,
+            fpn_returned_layers=[1,2,3]
+        )
 
         self.num_image_classes = num_image_classes
         if self.num_image_classes is not None:
@@ -134,7 +134,7 @@ class DABDETR(nn.Module):
                 )
             )
 
-    def forward(self, samples: NestedTensor, dn_args=None):
+    def forward(self, samples: NestedTensor, dn_args=None, bin_masks=None):
         """
             Add two functions prepare_for_dn and dn_post_process to implement dn
             The forward expects a NestedTensor, which consists of:
@@ -151,18 +151,21 @@ class DABDETR(nn.Module):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
-        
-        if isinstance(samples, (list, torch.Tensor)):
-            samples = nested_tensor_from_tensor_list(samples)
+        # if isinstance(samples, (list, torch.Tensor)):
+            # samples = nested_tensor_from_tensor_list(samples)
+        samples = NestedTensor(samples, bin_masks)
 
-        features = self.backbone(samples)
-        src, mask = features[-1].decompose()
+        # features = self.backbone(samples)
+        # src, mask = features[-1].decompose()
 
-        bs = src.shape[0]
-        dy_feats = self.dyhead(features)
-
+        # bs = src.shape[0]
+        # bs = src.shape[0]
+        # dy_feats = self.dyhead(features)
+        bs = samples.tensors.shape[0]
+        dy_feats = self.dyhead(samples)
+       
         if self.num_image_classes is not None:
-            last_fmap = dy_feats[:, -1].tensors
+            last_fmap = dy_feats[-1].tensors
             pooled_outputs = self.pooling(last_fmap)
             global_outputs = self.global_classifier(pooled_outputs)
 
@@ -182,7 +185,11 @@ class DABDETR(nn.Module):
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
-        return out, mask_dict
+
+        if self.num_image_classes is not None:
+            return out, mask_dict, global_outputs
+        else:
+            return out, mask_dict
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord):
