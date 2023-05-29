@@ -48,14 +48,12 @@ RUN curl -fsSL -v -o ~/mambaforge.sh -O https://github.com/conda-forge/miniforge
 
 # Install repo
 # COPY ./ /workspace/
-RUN git clone https://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@github.com/kaylode/vocal-folds.git /workspace/vocal-folds/
-WORKDIR /workspace/vocal-folds/
+RUN git clone https://github.com/kaylode/vofocd.git /workspace/vofocd/
+WORKDIR /workspace/vofocd/
 RUN /opt/mamba/bin/python -m pip install -r requirements.txt
 RUN /opt/mamba/bin/python -m pip install -U timm
 RUN chmod +x scripts/misc/*
-# RUN scripts/misc/download_kvasir.sh
 RUN scripts/misc/download_weights.sh
-RUN scripts/misc/download_vocals.sh
 
 FROM ${BASE_IMAGE} as official
 SHELL ["/bin/bash", "-c"]
